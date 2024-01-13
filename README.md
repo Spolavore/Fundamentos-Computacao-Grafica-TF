@@ -18,3 +18,17 @@ Definições:
 
 Segue abaixo um exemplo no jogo Minecraft:
 https://www.youtube.com/watch?v=ZCPt78a1eLc
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+A fazer:
+[] Malhas poligonais complexas
+[] Transformações geométricas controladas pelo usuário
+[] Camera livre e camera look-at
+[] Instancias de objetos
+[] Tres tipo de testes de intersecção
+[] Modelos de Iluminação Difusa e Blinn-Phon
+[] Modelos de Interpolação de Phong e Gouraud
+[] Mapeamento de texturas em todos os objetos
+[] Movimentação com curva Bézier cúbica
+[] Animações baseadas no tempo
