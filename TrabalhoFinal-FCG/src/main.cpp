@@ -124,6 +124,8 @@ void LoadShader(const char* filename, GLuint shader_id); // Função utilizada p
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
 void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector, glm::vec4 *up_vector, float *delta_t, float *speed, glm::vec4 *last_c_point);
+void LoadAllGameObj(); // Carrega todos os objetos do jogo
+
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -309,22 +311,10 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
-    LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
-    LoadTextureImage("../../data/purple_test.jpg"); // TextureImage1
-
+    LoadTextureImage("../../data/textura_madeira.jpg");       // TextureImage0
+    LoadTextureImage("../../data/floortexture.jpg");          // TextureImage1
     // Construímos a representação de objetos geométricos através de malhas de triângulos
-    ObjModel spheremodel("../../data/sphere.obj");
-    ComputeNormals(&spheremodel);
-    BuildTrianglesAndAddToVirtualScene(&spheremodel);
-
-    ObjModel bunnymodel("../../data/bunny.obj");
-    ComputeNormals(&bunnymodel);
-    BuildTrianglesAndAddToVirtualScene(&bunnymodel);
-
-    ObjModel planemodel("../../data/plane.obj");
-    ComputeNormals(&planemodel);
-    BuildTrianglesAndAddToVirtualScene(&planemodel);
+    LoadAllGameObj();
 
     if ( argc > 1 )
     {
@@ -465,31 +455,23 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
 
-        // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f)
-              * Matrix_Rotate_Z(0.6f)
-              * Matrix_Rotate_X(0.2f)
-              * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_sphere");
+        #define PLATAFORM 1
+        #define FLOOR 2
 
-        // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawVirtualObject("the_bunny");
 
-        // Desenhamos o plano do chão
-        model = Matrix_Translate(0.0f,-1.1f,0.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
-        DrawVirtualObject("the_plane");
+
+        for(float i=0; i < 4; i++){
+            model = Matrix_Translate(i, 0.0f+i, 0.0f) * Matrix_Scale(0.1f, 0.1f, 0.1f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLATAFORM);
+            DrawVirtualObject("Crate_Plane.005");
+        }
+
+            model =  Matrix_Translate(0.0f,0.0f,20.0f) *Matrix_Scale(-20.0f, 0.0f, -5.0f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, FLOOR);
+            DrawVirtualObject("10450_Rectangular_Grass_Patch_v1");
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -1467,6 +1449,17 @@ void TextRendering_ShowModelViewProjection(
     TextRendering_PrintMatrixVectorProductMoreDigits(window, viewport_mapping, p_ndc, -1.0f, 1.0f-26*pad, 1.0f);
 }
 
+
+void LoadAllGameObj(){
+    ObjModel plataform("../../data/Wooden Crate.obj");
+    ComputeNormals(&plataform);
+    BuildTrianglesAndAddToVirtualScene(&plataform);
+
+    ObjModel floor("../../data/floor.obj");
+    ComputeNormals(&floor);
+    BuildTrianglesAndAddToVirtualScene(&floor);
+
+}
 // Escrevemos na tela os ângulos de Euler definidos nas variáveis globais
 // g_AngleX, g_AngleY, e g_AngleZ.
 void TextRendering_ShowEulerAngles(GLFWwindow* window)
