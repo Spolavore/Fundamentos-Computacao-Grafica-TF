@@ -47,6 +47,7 @@
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
+#include "collisions.cpp"
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -233,8 +234,8 @@ int main(int argc, char* argv[])
     // sistema operacional, onde poderemos renderizar com OpenGL.
     int success = glfwInit();
     glm::vec4 camera_lookat_l  = glm::vec4(0.0f ,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-    glm::vec4 camera_position_c  = glm::vec4(-1.0f,0.0f,-1.0f,1.0f); // Ponto "c", centro da câmera
-    glm::vec4 last_camera_c_point = glm::vec4(-1.0f,0.0f,-1.0f,1.0f);
+    glm::vec4 camera_position_c  = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "c", centro da câmera
+    glm::vec4 last_camera_c_point = glm::vec4(0.0f,0.5f,-1.0f,1.0f);
     float delta_t = 0;
     float speed = 1.0f; // Velocidade da câmera
     float prev_time = (float) glfwGetTime();
@@ -468,7 +469,7 @@ int main(int argc, char* argv[])
             DrawVirtualObject("Crate_Plane.005");
         }
 
-            model =  Matrix_Translate(0.0f,0.0f,20.0f) *Matrix_Scale(-20.0f, 0.0f, -5.0f);
+            model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.0f, 3.0f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, FLOOR);
             DrawVirtualObject("10450_Rectangular_Grass_Patch_v1");
@@ -694,11 +695,13 @@ void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector
             *camera_c_position += -vetor_u * (*speed)* (*delta_t);
         }
         else if(tecla_W_pressionada){
+            w = glm::vec4(w.x, 0.0f, w.z, 0.0f);
             *camera_c_position += -w *  (*speed)* (*delta_t);
 
 
         }
         else if(tecla_S_pressionada){
+            w = glm::vec4(w.x, 0.0f, w.z, 0.0f);
             *camera_c_position += w * (*speed)* (*delta_t);
 
         }
