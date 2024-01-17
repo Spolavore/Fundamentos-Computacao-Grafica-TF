@@ -27,7 +27,7 @@
 
 #include <stb_image.h>
 #include "SceneObject.h"
-#define distancia_de_contato_caixa 3.5 // quanto maior essa constante mais perto da caixa a camera poderá chegar
+#define distancia_de_contato_caixa 15 // quanto maior essa constante mais perto da caixa a camera poderá chegar
 
 float norma(glm::vec4 v)
 {
@@ -56,18 +56,26 @@ void verifyChestCollisions(bool user_can_move[], glm::vec4 camera_c_position, gl
     glm::vec3 bbox_min_create =  g_VirtualScene["Crate_Plane.005"].bbox_min;
     glm::vec3 bbox_max_create =  g_VirtualScene["Crate_Plane.005"].bbox_max;
 
+    // Expande levemente a bbox a fim de evitar bordas sensíves, impedindo que o usuário entre parcialmente
+    // no objeto
+    bbox_min_create = glm::vec3(bbox_min_create.x*1.5, bbox_min_create.y, bbox_min_create.z*1.5);
+    bbox_max_create = glm::vec3(bbox_max_create.x*1.5, bbox_max_create.y, bbox_max_create.z*1.5);
+
+    // Pega a reta para onde o usuario está indo
+    camera_view_vector = glm::vec4(camera_view_vector.x, 0.0f, camera_view_vector.z, 0.0f);
+    glm::vec3 camera_view_vector_withou_w = glm::vec3(camera_view_vector.x, 0.0f, camera_view_vector.z);
+
+    // camera_right é o vetor lateral a camera_c_point e do view_vect
+    // FONTE: Adaptação do código do ChatGPT
+    glm::vec3 camera_right = glm::normalize(glm::cross(camera_view_vector_withou_w, glm::vec3(0.0f, 1.0f, 0.0f)));
+    // Aplica a coordenada w na camera_right
+    glm::vec4 camera_right_4_coord = glm::vec4(camera_right.x*0.2, camera_right.y*0.2, camera_right.z*0.2, 0.0);
+
 
     glm::vec4 foward_point_predicted = camera_c_position + (camera_view_vector/(norma(camera_view_vector)));
-    glm::vec4 left_point_predicted =  camera_c_position + glm::vec4(-0.015f, 0.0f, 0.0f, 0.0f);
-    // Abaixo convertemos o bbox global do objeto para as coordenadas
-    // locais, multiplicando pela matrix de escalamento e a matrix de transformação aplicadas no objeto
-    bbox_max_create *= glm::vec3(0.1f,0.1,0.1f);
-    bbox_min_create *= glm::vec3(0.1f,0.1,0.1f);
-
-      //printf("x:%f, y:%f, z:%f", bbox_min_create.x, bbox_min_create.y, bbox_min_create.z); //bbox_min
-      //printf("x:%f, y:%f, z:%f", bbox_max_create.x, bbox_max_create.y, bbox_max_create.z);// bbox_max
-      //printf("x:%f, y:%f, z:%f", camera_c_position.x, camera_c_position.y, camera_c_position.z); //CAMERA
-      //printf("x:%f, y:%f, z:%f", point_predicted.x, point_predicted.y, point_predicted.z);//point predicted
+    glm::vec4 left_point_predicted = camera_c_position + (-camera_right_4_coord);
+    glm::vec4 backwards_point_predicted = camera_c_position + -(camera_view_vector/(norma(camera_view_vector)));
+    glm::vec4 right_point_predicted = camera_c_position + (camera_right_4_coord);
 
     if(compareToBBox(foward_point_predicted, bbox_min_create, bbox_max_create)){
         user_can_move[0] = false;
@@ -80,6 +88,18 @@ void verifyChestCollisions(bool user_can_move[], glm::vec4 camera_c_position, gl
     } else{
         user_can_move[1] = true;
     }
+
+    if(compareToBBox(backwards_point_predicted, bbox_min_create, bbox_max_create)){
+        user_can_move[2] = false;
+    } else {
+        user_can_move[2] = true;
+    }
+    if(compareToBBox(right_point_predicted, bbox_min_create, bbox_max_create)){
+        user_can_move[3] = false;
+    } else{
+        user_can_move[3] =true;
+    }
+
 
 }
 

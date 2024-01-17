@@ -567,6 +567,7 @@ void DrawVirtualObject(const char* object_name)
     // com os parâmetros da axis-aligned bounding box (AABB) do modelo.
     glm::vec3 bbox_min = g_VirtualScene[object_name].bbox_min;
     glm::vec3 bbox_max = g_VirtualScene[object_name].bbox_max;
+
     glUniform4f(g_bbox_min_uniform, bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
     glUniform4f(g_bbox_max_uniform, bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
 
@@ -849,8 +850,17 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         theobject.rendering_mode = GL_TRIANGLES;       // Índices correspondem ao tipo de rasterização GL_TRIANGLES.
         theobject.vertex_array_object_id = vertex_array_object_id;
 
-        theobject.bbox_min = bbox_min;
-        theobject.bbox_max = bbox_max;
+
+        // Abaixo convertemos o bbox global do objeto para as coordenadas
+        // locais, multiplicando pela matrix de escalamento e a matrix de transformação aplicadas no objeto
+        if(theobject.name == "Crate_Plane.005"){
+            theobject.bbox_min = bbox_min.x * glm::vec3(0.1f,0.1f,0.1f);
+            theobject.bbox_max = bbox_max * glm::vec3(0.1f,0.1f,0.1f);
+        } else {
+            theobject.bbox_min = bbox_min;
+            theobject.bbox_max = bbox_max;
+        }
+
 
         g_VirtualScene[model->shapes[shape].name] = theobject;
     }
