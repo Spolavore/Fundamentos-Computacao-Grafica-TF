@@ -659,7 +659,7 @@
 	<array>
 	"mapbox/earcut.hpp"
 
-1705364243 source:c:\users\spola\documents\github\fundamentos-computacao-grafica-tf\trabalhofinal-fcg\src\main.cpp
+1705512888 source:c:\users\spola\documents\github\fundamentos-computacao-grafica-tf\trabalhofinal-fcg\src\main.cpp
 	<cmath>
 	<cstdio>
 	<cstdlib>
@@ -681,7 +681,8 @@
 	<stb_image.h>
 	"utils.h"
 	"matrices.h"
-	"collisions.cpp"
+	"collisions.h"
+	"SceneObject.h"
 
 1701916239 c:\users\spola\documents\github\fundamentos-computacao-grafica-tf\trabalhofinal-fcg\include\glm\gtc\type_ptr.hpp
 	"../gtc/quaternion.hpp"
@@ -972,7 +973,29 @@
 	"utils.h"
 	"matrices.h"
 
-1705364344 source:c:\users\spola\documents\github\fundamentos-computacao-grafica-tf\trabalhofinal-fcg\src\collisions.cpp
+1705512989 source:c:\users\spola\documents\github\fundamentos-computacao-grafica-tf\trabalhofinal-fcg\src\collisions.cpp
+	<cmath>
+	<cstdio>
+	<cstdlib>
+	<map>
+	<stack>
+	<string>
+	<vector>
+	<limits>
+	<fstream>
+	<sstream>
+	<stdexcept>
+	<algorithm>
+	<glad/glad.h>
+	<GLFW/glfw3.h>
+	<glm/mat4x4.hpp>
+	<glm/vec4.hpp>
+	<glm/gtc/type_ptr.hpp>
+	<tiny_obj_loader.h>
+	<stb_image.h>
+	"SceneObject.h"
+
+1705505807 c:\users\spola\documents\github\fundamentos-computacao-grafica-tf\trabalhofinal-fcg\src\collisions.cpp
 	<cmath>
 	<cstdio>
 	<cstdlib>
@@ -995,26 +1018,8 @@
 	"utils.h"
 	"matrices.h"
 
-1705364344 c:\users\spola\documents\github\fundamentos-computacao-grafica-tf\trabalhofinal-fcg\src\collisions.cpp
-	<cmath>
-	<cstdio>
-	<cstdlib>
-	<map>
-	<stack>
-	<string>
-	<vector>
-	<limits>
-	<fstream>
-	<sstream>
-	<stdexcept>
-	<algorithm>
-	<glad/glad.h>
-	<GLFW/glfw3.h>
-	<glm/mat4x4.hpp>
-	<glm/vec4.hpp>
-	<glm/gtc/type_ptr.hpp>
-	<tiny_obj_loader.h>
-	<stb_image.h>
-	"utils.h"
-	"matrices.h"
+1705512813 c:\users\spola\documents\github\fundamentos-computacao-grafica-tf\trabalhofinal-fcg\include\collisions.h
+	"SceneObject.h"
+
+1705507234 c:\users\spola\documents\github\fundamentos-computacao-grafica-tf\trabalhofinal-fcg\include\sceneobject.h
 

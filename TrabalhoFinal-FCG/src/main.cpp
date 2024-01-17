@@ -47,8 +47,8 @@
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
-#include "collisions.cpp"
-
+#include "collisions.h"
+#include "SceneObject.h"
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -157,18 +157,6 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 
-// Definimos uma estrutura que armazenará dados necessários para renderizar
-// cada objeto da cena virtual.
-struct SceneObject
-{
-    std::string  name;        // Nome do objeto
-    size_t       first_index; // Índice do primeiro vértice dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
-    size_t       num_indices; // Número de índices do objeto dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
-    GLenum       rendering_mode; // Modo de rasterização (GL_TRIANGLES, GL_TRIANGLE_STRIP, etc.)
-    GLuint       vertex_array_object_id; // ID do VAO onde estão armazenados os atributos do modelo
-    glm::vec3    bbox_min; // Axis-Aligned Bounding Box do objeto
-    glm::vec3    bbox_max;
-};
 
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
@@ -193,6 +181,8 @@ bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
 
 
+bool user_can_move[4] = {true, true , true, true}; // Diz qual direção o usuário pode se mover
+                                                  // 0 - W ; 1 - A ; 2 - S ; 3 - D
 // Verifica se as teclas W A S D estao pressionadas
 bool tecla_D_pressionada = false;
 bool tecla_W_pressionada = false;
@@ -396,6 +386,7 @@ int main(int argc, char* argv[])
 
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         }else{
+
             // Ao sair do modo look at volta para o estado que estava na camera livre
             if(!saveCameraInfos){
                 x = last_g_Distance*cos(last_phi)*sin(last_theta);
@@ -407,8 +398,8 @@ int main(int argc, char* argv[])
                 camera_view_vector = glm::vec4(x,-y,z,0.0f);
                 saveCameraInfos = true;
             }
-
             camera_position_c = last_camera_c_point;
+            verifyChestCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene);
             ApplyFreeCamera(&camera_position_c, &camera_view_vector, &camera_up_vector, &delta_t, &speed, &last_camera_c_point);
         }
 
@@ -460,15 +451,18 @@ int main(int argc, char* argv[])
         #define PLATAFORM 1
         #define FLOOR 2
 
-
-
+            model =  Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Translate(0.0f, 0.0f, 0.0f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLATAFORM);
+            DrawVirtualObject("Crate_Plane.005");
+/*
         for(float i=0; i < 4; i++){
             model = Matrix_Translate(i, 0.0f+i, 0.0f) * Matrix_Scale(0.1f, 0.1f, 0.1f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, PLATAFORM);
             DrawVirtualObject("Crate_Plane.005");
         }
-
+*/
             model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.0f, 3.0f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, FLOOR);
@@ -688,19 +682,19 @@ void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector
         } else {
             *speed = 1.0;
         }
-        if(tecla_D_pressionada){
+        if(tecla_D_pressionada  && user_can_move[3]){
             *camera_c_position += vetor_u *  (*speed) * (*delta_t);
         }
-        else if(tecla_A_pressionada){
+        else if(tecla_A_pressionada && user_can_move[1]){
             *camera_c_position += -vetor_u * (*speed)* (*delta_t);
         }
-        else if(tecla_W_pressionada){
+        else if(tecla_W_pressionada && user_can_move[0]){
             w = glm::vec4(w.x, 0.0f, w.z, 0.0f);
             *camera_c_position += -w *  (*speed)* (*delta_t);
 
 
         }
-        else if(tecla_S_pressionada){
+        else if(tecla_S_pressionada && user_can_move[2]){
             w = glm::vec4(w.x, 0.0f, w.z, 0.0f);
             *camera_c_position += w * (*speed)* (*delta_t);
 
