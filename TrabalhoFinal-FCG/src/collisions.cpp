@@ -51,55 +51,82 @@ bool compareToBBox(glm::vec4 point_predicted, glm::vec3 bbox_min, glm::vec3 bbox
         }
 
 }
-void verifyChestCollisions(bool user_can_move[], glm::vec4 camera_c_position, glm::vec4 camera_view_vector, std::map<std::string, SceneObject>& g_VirtualScene){
+void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
+                            glm::vec4 camera_view_vector, std::map<std::string, SceneObject>& g_VirtualScene,
+                            std::vector<glm::vec3> crates_translation_models){
+    // Pega a reta para onde o usuario está indo
+    camera_view_vector = glm::vec4(camera_view_vector.x, 0.0f, camera_view_vector.z, 0.0f);
+    glm::vec3 camera_view_vector_withou_w = glm::vec3(camera_view_vector.x, 0.0f, camera_view_vector.z);
+
+    // camera_right é o vetor lateral a camera_c_point e do view_vect
+
+    glm::vec3 camera_right = glm::normalize(glm::cross(camera_view_vector_withou_w, glm::vec3(0.0f, 1.0f, 0.0f)));
+    // Aplica a coordenada w na camera_right
+    glm::vec4 camera_right_4_coord = glm::vec4(camera_right.x*0.1, camera_right.y*0.1, camera_right.z*0.1, 0.0);
+
+    // Pontos da camera previstos pela movimentacao do usuário
+    glm::vec4 foward_point_predicted = camera_c_position + (camera_view_vector/(norma(camera_view_vector)));
+    glm::vec4 left_point_predicted = camera_c_position + (-camera_right_4_coord);
+    glm::vec4 backwards_point_predicted = camera_c_position + -(camera_view_vector/(norma(camera_view_vector)));
+    glm::vec4 right_point_predicted = camera_c_position + (camera_right_4_coord);
 
     glm::vec3 bbox_min_create =  g_VirtualScene["Crate_Plane.005"].bbox_min;
     glm::vec3 bbox_max_create =  g_VirtualScene["Crate_Plane.005"].bbox_max;
+
+    // Aplica a Matriz de Escalamento no bbox
+    bbox_min_create *= glm::vec3(0.1f,0.1f,0.1f);
+    bbox_max_create *= glm::vec3(0.1f,0.1f,0.1f);
+
 
     // Expande levemente a bbox a fim de evitar bordas sensíves, impedindo que o usuário entre parcialmente
     // no objeto
     bbox_min_create = glm::vec3(bbox_min_create.x*1.5, bbox_min_create.y, bbox_min_create.z*1.5);
     bbox_max_create = glm::vec3(bbox_max_create.x*1.5, bbox_max_create.y, bbox_max_create.z*1.5);
 
-    // Pega a reta para onde o usuario está indo
-    camera_view_vector = glm::vec4(camera_view_vector.x, 0.0f, camera_view_vector.z, 0.0f);
-    glm::vec3 camera_view_vector_withou_w = glm::vec3(camera_view_vector.x, 0.0f, camera_view_vector.z);
 
-    // camera_right é o vetor lateral a camera_c_point e do view_vect
-    // FONTE: Adaptação do código do ChatGPT
-    glm::vec3 camera_right = glm::normalize(glm::cross(camera_view_vector_withou_w, glm::vec3(0.0f, 1.0f, 0.0f)));
-    // Aplica a coordenada w na camera_right
-    glm::vec4 camera_right_4_coord = glm::vec4(camera_right.x*0.2, camera_right.y*0.2, camera_right.z*0.2, 0.0);
+    // Pega a primeira bbox da primeira create renderizada, eh nas variáveis abaixo que serão
+    // somadas os pesos de translação, visto que ao desenharmo o obj sempre aplicamos com base
+    // na origem
+    glm::vec3 origin_bbox_min_create = glm::vec3(bbox_min_create.x,bbox_min_create.y,bbox_min_create.z);
+    glm::vec3 origin_bbox_max_create = glm::vec3(bbox_max_create.x,bbox_max_create.y,bbox_max_create.z);
+
+    bool can_move_straight = true;
+    bool can_move_left = true;
+    bool can_move_right = true;
+    bool can_move_behind = true;
+
+    if(crates_translation_models.size() != 0){
+        for(int i = 0; i < crates_translation_models.size(); i++){
+
+            // Aplica as matrizes de translação no objeto
+            bbox_min_create = origin_bbox_min_create + crates_translation_models[i];
+            bbox_max_create = origin_bbox_max_create + crates_translation_models[i];
 
 
-    glm::vec4 foward_point_predicted = camera_c_position + (camera_view_vector/(norma(camera_view_vector)));
-    glm::vec4 left_point_predicted = camera_c_position + (-camera_right_4_coord);
-    glm::vec4 backwards_point_predicted = camera_c_position + -(camera_view_vector/(norma(camera_view_vector)));
-    glm::vec4 right_point_predicted = camera_c_position + (camera_right_4_coord);
 
-    if(compareToBBox(foward_point_predicted, bbox_min_create, bbox_max_create)){
-        user_can_move[0] = false;
+            // Se em qualquer uma das caixas de false então impossibilita a movimentação
+            // para aquela direção
+            if(compareToBBox(foward_point_predicted, bbox_min_create, bbox_max_create)){
+                can_move_straight = false;
+               }
+            if(compareToBBox(left_point_predicted, bbox_min_create, bbox_max_create)){
+                can_move_left = false;
+            }
 
-       } else{
-        user_can_move[0] = true;
-       }
-    if(compareToBBox(left_point_predicted, bbox_min_create, bbox_max_create)){
-        user_can_move[1] = false;
-    } else{
-        user_can_move[1] = true;
+            if(compareToBBox(backwards_point_predicted, bbox_min_create, bbox_max_create)){
+                can_move_behind = false;
+            }
+
+            if(compareToBBox(right_point_predicted, bbox_min_create, bbox_max_create)){
+                can_move_right = false;
+            }
+
+        }
+        user_can_move[0] = can_move_straight;
+        user_can_move[1] = can_move_left;
+        user_can_move[2] = can_move_behind;
+        user_can_move[3] = can_move_right;
     }
-
-    if(compareToBBox(backwards_point_predicted, bbox_min_create, bbox_max_create)){
-        user_can_move[2] = false;
-    } else {
-        user_can_move[2] = true;
-    }
-    if(compareToBBox(right_point_predicted, bbox_min_create, bbox_max_create)){
-        user_can_move[3] = false;
-    } else{
-        user_can_move[3] =true;
-    }
-
 
 }
 

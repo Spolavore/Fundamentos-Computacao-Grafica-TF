@@ -218,6 +218,8 @@ GLint g_bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
+
+std::vector<glm::vec3>  crates_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas caixas
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -399,7 +401,7 @@ int main(int argc, char* argv[])
                 saveCameraInfos = true;
             }
             camera_position_c = last_camera_c_point;
-            verifyChestCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene);
+            verifyCratesCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene, crates_translation_models);
             ApplyFreeCamera(&camera_position_c, &camera_view_vector, &camera_up_vector, &delta_t, &speed, &last_camera_c_point);
         }
 
@@ -451,18 +453,43 @@ int main(int argc, char* argv[])
         #define PLATAFORM 1
         #define FLOOR 2
 
-            model =  Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Translate(0.0f, 0.0f, 0.0f);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLATAFORM);
-            DrawVirtualObject("Crate_Plane.005");
-/*
-        for(float i=0; i < 4; i++){
-            model = Matrix_Translate(i, 0.0f+i, 0.0f) * Matrix_Scale(0.1f, 0.1f, 0.1f);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLATAFORM);
-            DrawVirtualObject("Crate_Plane.005");
-        }
-*/
+
+            float translate_x = 0.0f;
+            float translate_y = 0.0f;
+            float translate_z = 0.0f;
+
+            for(int i = 0; i < 4 ; i++){
+
+                model =  Matrix_Translate(translate_x, translate_y,translate_z) *  Matrix_Scale(0.1f, 0.1f, 0.1f);
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(g_object_id_uniform, PLATAFORM);
+                DrawVirtualObject("Crate_Plane.005");
+
+
+                // verifica se o vetor já está no vetor, se não está adiciona nele
+                glm::vec3 translated_model = glm::vec3(translate_x, translate_y, translate_z);
+                // Verifica se o vetor já está no vetor, se não está, adiciona nele
+
+                // FONTE DO CODIGO: CHATGPT-> Inicio
+                    bool alreadyExists = false;
+                    for (const auto& existingModel : crates_translation_models) {
+                        if (glm::all(glm::epsilonEqual(existingModel, translated_model, 0.001f))) {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+                // FINAL
+
+                if (!alreadyExists) {
+                    crates_translation_models.push_back(translated_model);
+                }
+
+                translate_x += 1.0f;
+            }
+
+
+
+
             model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.0f, 3.0f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, FLOOR);
@@ -853,13 +880,9 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
 
         // Abaixo convertemos o bbox global do objeto para as coordenadas
         // locais, multiplicando pela matrix de escalamento e a matrix de transformação aplicadas no objeto
-        if(theobject.name == "Crate_Plane.005"){
-            theobject.bbox_min = bbox_min.x * glm::vec3(0.1f,0.1f,0.1f);
-            theobject.bbox_max = bbox_max * glm::vec3(0.1f,0.1f,0.1f);
-        } else {
-            theobject.bbox_min = bbox_min;
-            theobject.bbox_max = bbox_max;
-        }
+        theobject.bbox_min = bbox_min;
+        theobject.bbox_max = bbox_max;
+
 
 
         g_VirtualScene[model->shapes[shape].name] = theobject;
