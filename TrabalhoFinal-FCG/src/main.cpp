@@ -193,8 +193,13 @@ bool shift_pressionado = false;
 bool espaço_pressionado = false;
 
 
+// variaveis de controle para saber se o jogador esta pulando ou caindo
 bool usuario_esta_pulando = false;
 bool usuario_esta_caindo = false;
+
+// verifica se o usuário pode pular
+int tempoPulo = 0;
+bool pode_pular = true;
 // Variáveis que definem a câmera em coordenadas esféricas, controladas pelo
 // usuário através do mouse (veja função CursorPosCallback()). A posição
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
@@ -363,6 +368,7 @@ int main(int argc, char* argv[])
 
          // Atualiza delta de tempo
         float current_time = (float)glfwGetTime();
+
         delta_t = current_time - prev_time;
         prev_time = current_time;
 
@@ -489,6 +495,7 @@ int main(int argc, char* argv[])
                 }
 
                 translate_x += 1.0f;
+                translate_y += 0.5f;
             }
 
 
@@ -504,7 +511,7 @@ int main(int argc, char* argv[])
 
 
 
-            verifyFalling(&last_camera_c_point, delta_t, &usuario_esta_caindo);
+            verifyFalling(&last_camera_c_point, delta_t, &usuario_esta_caindo, &pode_pular);
 
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -699,14 +706,28 @@ void PopMatrix(glm::mat4& M)
 }
 
 
-
+// Função que simula um pulo por parte do usuário
 void Jump(glm::vec4 *camera_c_position, float *delta_t){
 
-    usuario_esta_pulando = true;
-    glm::vec4 vector_up = glm::vec4(0.0f,4.0f, 0.0f, 0.0f);
-    float jump_speed = 2.0f;
+    // Se o tempo de pulo chegar a 20  então cancela
+    // e só permite pular novamente quando o usuário
+    // não estiver caindo
+    if(tempoPulo == 20){
+        pode_pular = false;
+        tempoPulo = 0;
+    }
+    //Realiza o pulo
+    if(pode_pular){
+        tempoPulo += 1;
+        usuario_esta_pulando = true;
+        glm::vec4 vector_up = glm::vec4(0.0f,2.0f, 0.0f, 0.0f);
+        float jump_speed = 2.0f;
 
-    *camera_c_position += vector_up * jump_speed * (*delta_t);
+        *camera_c_position += vector_up * jump_speed * (*delta_t);
+
+
+    }
+
 }
 void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector, glm::vec4 *up_vector, float *delta_t, float *speed, glm::vec4 *last_c_point){
 
@@ -1306,12 +1327,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             // Usuário largou a tecla D, então atualizamos o estado para NÃO pressionada
             espaço_pressionado = false;
 
-        }else if (action == GLFW_REPEAT){
-            // Usuário está segurando a tecla D e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            ;
         }
 
     }

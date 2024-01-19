@@ -30,6 +30,8 @@
 #define distancia_de_contato_caixa 15 // quanto maior essa constante mais perto da caixa a camera poderá chegar
 bool isFallingCrate = false; // verifica se abaixo do player está presente uma caixa
 
+float x_expansion_when_falling = 0.0f;
+float z_expansion_when_falling = 0.0f;
 
 float norma(glm::vec4 v)
 {
@@ -75,7 +77,7 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
     glm::vec4 left_point_predicted = camera_c_position + (-camera_right_4_coord);
     glm::vec4 backwards_point_predicted = camera_c_position + -(camera_view_vector/(norma(camera_view_vector)));
     glm::vec4 right_point_predicted = camera_c_position + (camera_right_4_coord);
-    glm::vec4 down_point_predicted = camera_c_position - glm::vec4(0.0f, 0.5f, 0.0f, 0.0f);
+    glm::vec4 down_point_predicted =  camera_c_position - glm::vec4(0.0f, 0.2f, 0.0f, 0.0f);
 
     glm::vec3 bbox_min_create =  g_VirtualScene["Crate_Plane.005"].bbox_min;
     glm::vec3 bbox_max_create =  g_VirtualScene["Crate_Plane.005"].bbox_max;
@@ -87,8 +89,8 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
 
     // Expande levemente a bbox a fim de evitar bordas sensíves, impedindo que o usuário entre parcialmente
     // no objeto
-    bbox_min_create = glm::vec3(bbox_min_create.x*1.5, bbox_min_create.y, bbox_min_create.z*1.5);
-    bbox_max_create = glm::vec3(bbox_max_create.x*1.5, bbox_max_create.y, bbox_max_create.z*1.5);
+    bbox_min_create = glm::vec3(bbox_min_create.x*1.5 , bbox_min_create.y*1.5, bbox_min_create.z*1.5 );
+    bbox_max_create = glm::vec3(bbox_max_create.x*1.5 , bbox_max_create.y*1.5, bbox_max_create.z*1.5);
 
 
     // Pega a primeira bbox da primeira create renderizada, eh nas variáveis abaixo que serão
@@ -133,7 +135,6 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
             if(compareToBBox(down_point_predicted, bbox_min_create, bbox_max_create)){
                 hittedBoxOnFall = true;
 
-
             }
 
         }
@@ -151,14 +152,18 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
 
 // Função que verifica se o player está caindo, se ele estiver vai reduzindo o y da camera_c_position
 // ate chegar em contato com algo ou com o ponto de origem y = 0.5
-void verifyFalling(glm::vec4 *camera_c_position, float delta_t, bool *usuario_esta_caindo){
-    float fallingSpeed = 5.0;
-
+void verifyFalling(glm::vec4 *camera_c_position, float delta_t, bool *usuario_esta_caindo, bool *pode_pular){
+    float fallingSpeed = 8.0;
+    // se a posição y da camera for maior do que 0.5 ( ela nao esta no chao ) ou está caindo
     if(camera_c_position->y > 0.5 && isFallingCrate){
 
         *camera_c_position -= glm::vec4(0.0f, 0.2f, 0.0f, 0.0f) * fallingSpeed * delta_t;
+
     } else {
         *usuario_esta_caindo = false;
+        *pode_pular = true;
     }
+
+
 
 }
