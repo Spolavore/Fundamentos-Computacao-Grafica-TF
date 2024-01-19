@@ -28,6 +28,8 @@
 #include <stb_image.h>
 #include "SceneObject.h"
 #define distancia_de_contato_caixa 15 // quanto maior essa constante mais perto da caixa a camera poderá chegar
+bool isFallingCrate = false; // verifica se abaixo do player está presente uma caixa
+
 
 float norma(glm::vec4 v)
 {
@@ -51,9 +53,13 @@ bool compareToBBox(glm::vec4 point_predicted, glm::vec3 bbox_min, glm::vec3 bbox
         }
 
 }
+
+// Função que verifica se ocorreu colissões com qualquer uma das caixas (objs) do jogo
 void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
                             glm::vec4 camera_view_vector, std::map<std::string, SceneObject>& g_VirtualScene,
                             std::vector<glm::vec3> crates_translation_models){
+
+
     // Pega a reta para onde o usuario está indo
     camera_view_vector = glm::vec4(camera_view_vector.x, 0.0f, camera_view_vector.z, 0.0f);
     glm::vec3 camera_view_vector_withou_w = glm::vec3(camera_view_vector.x, 0.0f, camera_view_vector.z);
@@ -69,6 +75,7 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
     glm::vec4 left_point_predicted = camera_c_position + (-camera_right_4_coord);
     glm::vec4 backwards_point_predicted = camera_c_position + -(camera_view_vector/(norma(camera_view_vector)));
     glm::vec4 right_point_predicted = camera_c_position + (camera_right_4_coord);
+    glm::vec4 down_point_predicted = camera_c_position - glm::vec4(0.0f, 0.5f, 0.0f, 0.0f);
 
     glm::vec3 bbox_min_create =  g_VirtualScene["Crate_Plane.005"].bbox_min;
     glm::vec3 bbox_max_create =  g_VirtualScene["Crate_Plane.005"].bbox_max;
@@ -90,11 +97,13 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
     glm::vec3 origin_bbox_min_create = glm::vec3(bbox_min_create.x,bbox_min_create.y,bbox_min_create.z);
     glm::vec3 origin_bbox_max_create = glm::vec3(bbox_max_create.x,bbox_max_create.y,bbox_max_create.z);
 
+    // assume que nada esta acontecendo no usuario
+
     bool can_move_straight = true;
     bool can_move_left = true;
     bool can_move_right = true;
     bool can_move_behind = true;
-
+    bool hittedBoxOnFall = false;
     if(crates_translation_models.size() != 0){
         for(int i = 0; i < crates_translation_models.size(); i++){
 
@@ -121,12 +130,35 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
                 can_move_right = false;
             }
 
+            if(compareToBBox(down_point_predicted, bbox_min_create, bbox_max_create)){
+                hittedBoxOnFall = true;
+
+
+            }
+
         }
+
         user_can_move[0] = can_move_straight;
         user_can_move[1] = can_move_left;
         user_can_move[2] = can_move_behind;
         user_can_move[3] = can_move_right;
+        isFallingCrate = !hittedBoxOnFall;
     }
 
 }
 
+
+
+// Função que verifica se o player está caindo, se ele estiver vai reduzindo o y da camera_c_position
+// ate chegar em contato com algo ou com o ponto de origem y = 0.5
+void verifyFalling(glm::vec4 *camera_c_position, float delta_t, bool *usuario_esta_caindo){
+    float fallingSpeed = 5.0;
+
+    if(camera_c_position->y > 0.5 && isFallingCrate){
+
+        *camera_c_position -= glm::vec4(0.0f, 0.2f, 0.0f, 0.0f) * fallingSpeed * delta_t;
+    } else {
+        *usuario_esta_caindo = false;
+    }
+
+}

@@ -126,7 +126,7 @@ GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // 
 void PrintObjModelInfo(ObjModel*); // Função para debugging
 void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector, glm::vec4 *up_vector, float *delta_t, float *speed, glm::vec4 *last_c_point);
 void LoadAllGameObj(); // Carrega todos os objetos do jogo
-
+void Jump(glm::vec4 *camera_c_position, float *delta_t);
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -190,7 +190,11 @@ bool tecla_A_pressionada = false;
 bool tecla_S_pressionada = false;
 bool tecla_C_pressionada = false;
 bool shift_pressionado = false;
+bool espaço_pressionado = false;
 
+
+bool usuario_esta_pulando = false;
+bool usuario_esta_caindo = false;
 // Variáveis que definem a câmera em coordenadas esféricas, controladas pelo
 // usuário através do mouse (veja função CursorPosCallback()). A posição
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
@@ -382,7 +386,7 @@ int main(int argc, char* argv[])
                 glm::vec4 view_down = glm::vec4(camera_view_vector.x,
                                                 0.0f, camera_view_vector.z, 0.0f);
                 camera_lookat_l  = view_down + glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto de look at
-                camera_position_c = glm::vec4(camera_position_c.x, camera_position_c.y + 6.0f,camera_position_c.z, 1.0f); // Ponto "c", centro da câmera
+                camera_position_c = glm::vec4(camera_position_c.x-0.1f, camera_position_c.y + 6.0f,camera_position_c.z, 1.0f); // Ponto "c", centro da câmera
 
             }
 
@@ -490,10 +494,18 @@ int main(int argc, char* argv[])
 
 
 
+
+
             model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.0f, 3.0f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, FLOOR);
             DrawVirtualObject("10450_Rectangular_Grass_Patch_v1");
+
+
+
+
+            verifyFalling(&last_camera_c_point, delta_t, &usuario_esta_caindo);
+
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -685,6 +697,17 @@ void PopMatrix(glm::mat4& M)
         g_MatrixStack.pop();
     }
 }
+
+
+
+void Jump(glm::vec4 *camera_c_position, float *delta_t){
+
+    usuario_esta_pulando = true;
+    glm::vec4 vector_up = glm::vec4(0.0f,4.0f, 0.0f, 0.0f);
+    float jump_speed = 2.0f;
+
+    *camera_c_position += vector_up * jump_speed * (*delta_t);
+}
 void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector, glm::vec4 *up_vector, float *delta_t, float *speed, glm::vec4 *last_c_point){
 
         glm::vec4 w = -(*camera_view_vector)/norm(*camera_view_vector);
@@ -710,6 +733,12 @@ void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector
         } else {
             *speed = 1.0;
         }
+
+        if(espaço_pressionado){
+            Jump(camera_c_position,delta_t);
+            usuario_esta_caindo = true;
+        }
+
         if(tecla_D_pressionada  && user_can_move[3]){
             *camera_c_position += vetor_u *  (*speed) * (*delta_t);
         }
@@ -1265,6 +1294,26 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             // necessariamente deve ter ocorrido um evento PRESS.
             ;
         }
+    }
+    if(key == GLFW_KEY_SPACE)
+    {
+       if (action == GLFW_PRESS){
+
+            // Usuário apertou a tecla D, então atualizamos o estado para pressionada
+            espaço_pressionado= true;
+
+        }else if (action == GLFW_RELEASE){
+            // Usuário largou a tecla D, então atualizamos o estado para NÃO pressionada
+            espaço_pressionado = false;
+
+        }else if (action == GLFW_REPEAT){
+            // Usuário está segurando a tecla D e o sistema operacional está
+            // disparando eventos de repetição. Neste caso, não precisamos
+            // atualizar o estado da tecla, pois antes de um evento REPEAT
+            // necessariamente deve ter ocorrido um evento PRESS.
+            ;
+        }
+
     }
     // Seta a camera look at
     if(key == GLFW_KEY_C && action == GLFW_PRESS){
