@@ -199,6 +199,7 @@ bool usuario_esta_caindo = false;
 
 // verifica se o usuário pode pular
 int tempoPulo = 0;
+#define MAX_TEMPO_PULO 10
 bool pode_pular = true;
 // Variáveis que definem a câmera em coordenadas esféricas, controladas pelo
 // usuário através do mouse (veja função CursorPosCallback()). A posição
@@ -411,8 +412,19 @@ int main(int argc, char* argv[])
                 saveCameraInfos = true;
             }
             camera_position_c = last_camera_c_point;
-            verifyCratesCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene, crates_translation_models);
+            verifyCratesCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene, crates_translation_models, &pode_pular);
             ApplyFreeCamera(&camera_position_c, &camera_view_vector, &camera_up_vector, &delta_t, &speed, &last_camera_c_point);
+
+            // Verificação de cancelamento de pulo
+            // Se o tempo de pulo chegar a 20  então cancela
+            // e só permite pular novamente quando o usuário
+            // não estiver caindo
+            if(tempoPulo == MAX_TEMPO_PULO){
+                pode_pular = false;
+                usuario_esta_pulando = false;
+                tempoPulo = 0;
+            }
+
         }
 
 // --------------------------------------------------------- FINAL -----------------------------------------------------------------------------
@@ -511,7 +523,7 @@ int main(int argc, char* argv[])
 
 
 
-            verifyFalling(&last_camera_c_point, delta_t, &usuario_esta_caindo, &pode_pular);
+            verifyFalling(&last_camera_c_point, delta_t, &usuario_esta_caindo, &pode_pular, &usuario_esta_pulando);
 
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -709,19 +721,12 @@ void PopMatrix(glm::mat4& M)
 // Função que simula um pulo por parte do usuário
 void Jump(glm::vec4 *camera_c_position, float *delta_t){
 
-    // Se o tempo de pulo chegar a 20  então cancela
-    // e só permite pular novamente quando o usuário
-    // não estiver caindo
-    if(tempoPulo == 20){
-        pode_pular = false;
-        tempoPulo = 0;
-    }
     //Realiza o pulo
     if(pode_pular){
         tempoPulo += 1;
         usuario_esta_pulando = true;
-        glm::vec4 vector_up = glm::vec4(0.0f,2.0f, 0.0f, 0.0f);
-        float jump_speed = 2.0f;
+        glm::vec4 vector_up = glm::vec4(0.0f, 2.5f, 0.0f, 0.0f);
+        float jump_speed = 1.5f;
 
         *camera_c_position += vector_up * jump_speed * (*delta_t);
 
@@ -1326,7 +1331,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         }else if (action == GLFW_RELEASE){
             // Usuário largou a tecla D, então atualizamos o estado para NÃO pressionada
             espaço_pressionado = false;
-
+            tempoPulo = MAX_TEMPO_PULO; // se o usuário soltou o espaço então cancela o pulo
         }
 
     }
