@@ -175,6 +175,7 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
 void verifyFalling(glm::vec4 *camera_c_position, float delta_t, bool *usuario_esta_caindo, bool *pode_pular, bool *usuario_esta_pulando){
     float fallingSpeed = 8.0;
 
+
     // se a posição y da camera for maior do que 0.5 ( ela nao esta no chao ) ou está caindo
     if(camera_c_position->y > 0.5 && isFallingCrate && applyInstantFall){
         *usuario_esta_pulando = false;
@@ -190,5 +191,11 @@ void verifyFalling(glm::vec4 *camera_c_position, float delta_t, bool *usuario_es
     }
 
 
+    // Se o valor y da camera for menor do 0.5 então força ele para 0.5 para garantir a permanencia
+    // do funcionamento do contato com as caixas. Ainda, se y for menor do que 0.5, significa que ele
+    // ta no "solo" ou seja a altura padrao da camera DEVE ser 0.5
+    if(camera_c_position->y < 0.5){
+        *camera_c_position = glm::vec4(camera_c_position->x, 0.5f, camera_c_position->z, 1.0f);
+    }
 
 }

@@ -725,7 +725,7 @@ void Jump(glm::vec4 *camera_c_position, float *delta_t){
     if(pode_pular){
         tempoPulo += 1;
         usuario_esta_pulando = true;
-        glm::vec4 vector_up = glm::vec4(0.0f,2.5f, 0.0f, 0.0f);
+        glm::vec4 vector_up = glm::vec4(0.0f, 2.5f, 0.0f, 0.0f);
         float jump_speed = 1.5f;
 
         *camera_c_position += vector_up * jump_speed * (*delta_t);
