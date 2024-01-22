@@ -22,6 +22,7 @@ uniform mat4 projection;
 
 #define PLATAFORM 1
 #define FLOOR 2
+#define WOODFLOOR 3
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -31,6 +32,7 @@ uniform vec4 bbox_max;
 // Variáveis para acesso das imagens de textura
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
+uniform sampler2D TextureImage2;
 
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -98,7 +100,7 @@ void main()
         Kd0  = texture(TextureImage0, vec2(U,V)).rgb;
 
     }
-    /*else if ( object_id == BUNNY || object_id == PLATAFORM)
+    else if ( object_id == WOODFLOOR)
     {
         // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
         // projeção planar XY em COORDENADAS DO MODELO. Utilize como referência
@@ -122,7 +124,7 @@ void main()
         U = (position_model.x - minx)/(maxx - minx);
         V = (position_model.y - miny) / (maxy - miny);
         Kd0  = texture(TextureImage2, vec2(U,V)).rgb;
-    }*/
+    }
     else if ( object_id == FLOOR )
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.

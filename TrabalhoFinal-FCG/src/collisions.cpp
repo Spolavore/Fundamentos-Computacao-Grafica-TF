@@ -28,11 +28,11 @@
 #include <stb_image.h>
 #include "SceneObject.h"
 #define distancia_de_contato_caixa 15 // quanto maior essa constante mais perto da caixa a camera poderá chegar
-bool isFallingCrate = false; // verifica se abaixo do player está presente uma caixa
-
+bool isFallingCrate = false; // verifica se abaixo do player está presente uma caixa (usado tambem para plataformas)
 bool applyInstantFall = false; // controla se o jogador deve receber queda instantânea ( útil para situação como contato superior com objeto)
                                // * bater a "cabeca" em algo *
-
+#define CRATE 0
+#define PLATAFORM 1
 
 float norma(glm::vec4 v)
 {
@@ -60,7 +60,7 @@ bool compareToBBox(glm::vec4 point_predicted, glm::vec3 bbox_min, glm::vec3 bbox
 // Função que verifica se ocorreu colissões com qualquer uma das caixas (objs) do jogo
 void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
                             glm::vec4 camera_view_vector, std::map<std::string, SceneObject>& g_VirtualScene,
-                            std::vector<glm::vec3> crates_translation_models, bool *pode_pular){
+                            std::vector<glm::vec3> translation_models, bool *pode_pular){
 
 
     // Pega a reta para onde o usuario está indo
@@ -87,8 +87,14 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
     glm::vec4 up_point_predicted = camera_c_position + glm ::vec4(0.0f, 0.2f, 0.0f, 0.0f);
 
 
-    glm::vec3 bbox_min_create =  g_VirtualScene["Crate_Plane.005"].bbox_min;
-    glm::vec3 bbox_max_create =  g_VirtualScene["Crate_Plane.005"].bbox_max;
+
+
+    glm::vec3 bbox_min_create;
+    glm::vec3 bbox_max_create;
+
+
+    bbox_min_create =  g_VirtualScene["Crate_Plane.005"].bbox_min;
+    bbox_max_create =  g_VirtualScene["Crate_Plane.005"].bbox_max;
 
     // Aplica a Matriz de Escalamento no bbox
     bbox_min_create *= glm::vec3(0.1f,0.1f,0.1f);
@@ -115,12 +121,13 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
     bool can_move_right = true;
     bool can_move_behind = true;
     bool hittedBoxOnFall = false;
-    if(crates_translation_models.size() != 0){
-        for(int i = 0; i < crates_translation_models.size(); i++){
+    if(translation_models.size() != 0){
+        for(int i = 0; i < translation_models.size(); i++){
 
             // Aplica as matrizes de translação no objeto
-            bbox_min_create = origin_bbox_min_create + crates_translation_models[i];
-            bbox_max_create = origin_bbox_max_create + crates_translation_models[i];
+            bbox_min_create = origin_bbox_min_create + translation_models[i];
+            bbox_max_create = origin_bbox_max_create + translation_models[i];
+
 
 
 
@@ -164,6 +171,8 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
         user_can_move[3] = can_move_right;
         *pode_pular = can_jump;
         isFallingCrate = !hittedBoxOnFall;
+
+
     }
 
 }
@@ -199,3 +208,60 @@ void verifyFalling(glm::vec4 *camera_c_position, float delta_t, bool *usuario_es
     }
 
 }
+
+
+// Testa se o usuário está em cima de uma plataforma, como só importa saber se quando o usuário
+// está caindo e bate numa plataforma, então realiza apenas o teste de quedra( down_predicted_point)
+void verifyPlataformCollisions(glm::vec4 camera_c_position,  glm::vec4 camera_view_vector,
+                                std::map<std::string, SceneObject>& g_VirtualScene,
+                                std::vector<glm::vec3> translation_models, bool user_can_move_in_platforms[]){
+
+
+    glm::vec3 bbox_min_create =  g_VirtualScene["cartoon wooden floor"].bbox_min;
+    glm::vec3 bbox_max_create =  g_VirtualScene["cartoon wooden floor"].bbox_max;
+
+    // Aplica a matriz de escalamento nas bbox
+    bbox_min_create *= glm::vec3(0.1f,0.1f,0.1f);
+    bbox_max_create *= glm::vec3(0.1f,0.1f,0.1f);
+
+    // Expande levemente a bbox a fim de evitar bordas sensíves, impedindo que o usuário entre parcialmente
+    // no objeto
+    bbox_min_create = glm::vec3(bbox_min_create.x*1.5 , bbox_min_create.y*1, bbox_min_create.z*1.5);
+    bbox_max_create = glm::vec3(bbox_max_create.x*1.5 , bbox_max_create.y*1, bbox_max_create.z*1.5);
+
+
+    // ponto de comparação frontal
+    glm::vec4 foward_comparation = camera_view_vector/(norma(camera_view_vector));
+    foward_comparation = glm::vec4(foward_comparation.x, 0.0f, foward_comparation.z, 0.0f);
+
+    glm::vec4 down_predicted_vector = camera_c_position - glm::vec4(0.0f, 0.3f, 0.0f, 0.0f);
+    glm::vec4 foward_point_predicted = camera_c_position + foward_comparation;
+
+    glm::vec3 origin_bbox_min_create = glm::vec3(bbox_min_create.x,bbox_min_create.y,bbox_min_create.z);
+    glm::vec3 origin_bbox_max_create = glm::vec3(bbox_max_create.x,bbox_max_create.y,bbox_max_create.z);
+
+
+
+    bool hittedInFront = false;
+    if(translation_models.size() != 0){
+        for(int i = 0; i < translation_models.size(); i++){
+            // Aplica as matrizes de translação no objeto
+            bbox_min_create = origin_bbox_min_create + translation_models[i];
+            bbox_max_create = origin_bbox_max_create + translation_models[i];
+
+
+
+            if(compareToBBox(down_predicted_vector, bbox_min_create, bbox_max_create)){
+                isFallingCrate = false;
+            }
+
+            if(compareToBBox(foward_point_predicted,bbox_min_create, bbox_max_create)){
+                printf("BATEU");
+                hittedInFront = true;
+            }
+        }
+    }
+
+    user_can_move_in_platforms[0] = !hittedInFront;
+}
+
