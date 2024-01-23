@@ -23,6 +23,7 @@ uniform mat4 projection;
 #define PLATAFORM 1
 #define FLOOR 2
 #define WOODFLOOR 3
+#define COW 4
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -33,7 +34,7 @@ uniform vec4 bbox_max;
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
-
+uniform sampler2D TextureImage3;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -97,7 +98,43 @@ void main()
 
         U = (teta + M_PI)/ (2*M_PI);
         V = (phi + (M_PI/2))/ M_PI;
-        Kd0  = texture(TextureImage0, vec2(U,V)).rgb;
+
+           Kd0  = texture(TextureImage0, vec2(U,V)).rgb;
+
+
+
+    }
+    else    if ( object_id == COW )
+    {
+        // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
+        // projeção esférica EM COORDENADAS DO MODELO. Utilize como referência
+        // o slides 134-150 do documento Aula_20_Mapeamento_de_Texturas.pdf.
+        // A esfera que define a projeção deve estar centrada na posição
+        // "bbox_center" definida abaixo.
+
+        // Você deve utilizar:
+        //   função 'length( )' : comprimento Euclidiano de um vetor
+        //   função 'atan( , )' : arcotangente. Veja https://en.wikipedia.org/wiki/Atan2.
+        //   função 'asin( )'   : seno inverso.
+        //   constante M_PI
+        //   variável position_model
+
+        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+
+        float rho = 1;
+        vec4 plinha = bbox_center + rho*((position_model-bbox_center)/length(position_model-bbox_center)); // ponto na projeção esférica'
+        vec4 pvetor =(plinha - bbox_center); // vetor da projeção esférica a partir da origem
+
+        float teta = atan(pvetor.x, pvetor.z);
+        float phi = asin(pvetor.y/rho);
+
+
+        U = (teta + M_PI)/ (2*M_PI);
+        V = (phi + (M_PI/2))/ M_PI;
+
+
+        Kd0  = texture(TextureImage3, vec2(U,V)).rgb;
+
 
     }
     else if ( object_id == WOODFLOOR)

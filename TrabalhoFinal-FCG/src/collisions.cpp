@@ -274,3 +274,41 @@ void verifyPlataformCollisions(glm::vec4 camera_c_position,  glm::vec4 camera_vi
     user_can_move_in_platforms[0] = !hittedInFront;
 }
 
+
+// Verifica se o usuário entrou em contato com a caixa
+void verifyIfHittedCow(glm::vec4 *camera_c_position, std::vector<glm::vec3> translation_models){
+    // Aqui pegamos a posição 0 na matriz de translação pois só há UMA vaca sendo renderizada,
+    // OU SEJA, caso queira-se mudar para haver duas vacas no jogo o código abaixo funcionará
+    // apenas para a primeira
+    if(translation_models.size() != 0){
+        glm::vec3 cow_vector_position = translation_models[0];
+        float x_center_circle = cow_vector_position.x;
+        float y_center_circle = cow_vector_position.y;
+        float z_center_circle = cow_vector_position.z;
+
+
+
+    // Raio do Circulo
+    float circle_r = 0.7f;
+
+
+    // distancia entre o ponto e o centro do circulo
+    float distance_camera_circle = std::sqrt( std::pow(camera_c_position->x - x_center_circle, 2) +
+                                              std::pow(camera_c_position->y - y_center_circle, 2) +
+                                              std::pow(camera_c_position->z - z_center_circle, 2));
+    // se a distancia entre o ponto entre a camera e o circulo for menor que o raio então reinicia
+    // a posição do jogador para a posição inicial
+    if(distance_camera_circle <= circle_r){
+        *camera_c_position = glm::vec4(0.0f, 0.5f,-0.5f,1.0f);
+    }
+
+  }
+}
+
+
+
+
+
+
+
+

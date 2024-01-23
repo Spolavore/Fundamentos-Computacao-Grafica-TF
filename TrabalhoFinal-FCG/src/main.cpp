@@ -204,7 +204,7 @@ bool usuario_esta_caindo = false;
 
 // verifica se o usuário pode pular
 int tempoPulo = 0;
-#define MAX_TEMPO_PULO 10
+
 bool pode_pular = true;
 // Variáveis que definem a câmera em coordenadas esféricas, controladas pelo
 // usuário através do mouse (veja função CursorPosCallback()). A posição
@@ -233,10 +233,15 @@ GLint g_bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
+float cow_y_rotation = 0.0f; // controla a rotação da vaca (é automaticamente incrementado)
 
 std::vector<glm::vec3>  crates_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas caixas
 std::vector<glm::vec3>  crates_rotation_models; // vetor contendo todas as transformações de rotação de modelo aplicadas nas caixas
 std::vector<glm::vec3>  plataforms_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas plataformas
+std::vector<glm::vec3>  cow_translation_models;
+float jump_initial_time = 1.0f;
+float jump_current_time = 0.0f;
+#define MAX_TEMPO_PULO 0.2f
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -324,6 +329,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/textura_madeira.jpg");                // TextureImage0
     LoadTextureImage("../../data/floortexture.jpg");                   // TextureImage1
     LoadTextureImage("../../data/textura_madeira_clean.jpg");          // TextureImage2
+    LoadTextureImage("../../data/cow_texture.jpg");                    // TextureImage3
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     LoadAllGameObj();
 
@@ -423,17 +429,14 @@ int main(int argc, char* argv[])
 
             verifyCratesCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene, crates_translation_models, &pode_pular, crates_rotation_models);
             verifyPlataformCollisions(camera_position_c, camera_view_vector, g_VirtualScene, plataforms_translation_models, user_can_move_in_platforms);
+            verifyIfHittedCow(&camera_position_c, cow_translation_models);
             ApplyFreeCamera(&camera_position_c, &camera_view_vector, &camera_up_vector, &delta_t, &speed, &last_camera_c_point);
 
             // Verificação de cancelamento de pulo
             // Se o tempo de pulo chegar a 20  então cancela
             // e só permite pular novamente quando o usuário
             // não estiver caindo
-            if(tempoPulo == MAX_TEMPO_PULO){
-                pode_pular = false;
-                usuario_esta_pulando = false;
-                tempoPulo = 0;
-            }
+
 
         }
 
@@ -485,6 +488,7 @@ int main(int argc, char* argv[])
         #define PLATAFORM 1
         #define FLOOR 2
         #define WOODFLOOR 3
+        #define COW 4
         // ==================================  FASE 1 ==================================================================
             float translate_x = 0.0f;
             float translate_y = 0.0f;
@@ -637,15 +641,27 @@ int main(int argc, char* argv[])
                 }
             }
 
-            plataforme_translate_x = -5.0f;
-            plataforme_translate_y = 12.4f;
-            plataforme_translate_z = 11.0f;
+            plataforme_translate_x = 5.0f;
+            plataforme_translate_y = 10.4f;
+            plataforme_translate_z = 2.0f;
             model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WOODFLOOR);
             DrawVirtualObject("cartoon wooden floor");
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
+
+            float cow_translate_x = plataforme_translate_x;
+            float cow_translate_y = plataforme_translate_y += 0.5f;
+            float cow_translate_z = plataforme_translate_z;
+            model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.5f, 0.5f, 0.5f)
+                     * Matrix_Rotate_Y(cow_y_rotation);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, COW);
+            DrawVirtualObject("cow");
+
+            VerifyIfExistInVector(&cow_translation_models, glm::vec3(cow_translate_x, cow_translate_y, cow_translate_z));
+            cow_y_rotation += 0.1f;
             // ==================================  FASE 4 ==================================================================
 
             model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.0f, 3.0f);
@@ -847,6 +863,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
     glUseProgram(0);
 }
 
@@ -873,6 +890,24 @@ void PopMatrix(glm::mat4& M)
 
 // Função que simula um pulo por parte do usuário
 void Jump(glm::vec4 *camera_c_position, float *delta_t){
+
+
+    // Verifica se o tempo que o usuário está pulado passou
+    // do tempo MAX de pulo, se sim então cancela o pulo e o
+    // usuário passa a cair
+    if(jump_initial_time == -1.0f){
+        jump_initial_time = (float) glfwGetTime();
+    }
+    jump_current_time = (float) glfwGetTime();
+
+    if(jump_current_time - jump_initial_time >= MAX_TEMPO_PULO){
+        pode_pular = false;
+        usuario_esta_pulando = false;
+        jump_initial_time = -1.0f;
+        jump_current_time = 0.0f;
+
+    }
+
 
     //Realiza o pulo
     if(pode_pular){
@@ -1545,7 +1580,12 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         }else if (action == GLFW_RELEASE){
             // Usuário largou a tecla D, então atualizamos o estado para NÃO pressionada
             espaço_pressionado = false;
-            tempoPulo = MAX_TEMPO_PULO; // se o usuário soltou o espaço então cancela o pulo
+            if(jump_current_time - jump_initial_time <= MAX_TEMPO_PULO){
+                pode_pular = false;
+                usuario_esta_pulando = false;
+                jump_initial_time = -1.0f;
+                jump_current_time = 0.0f;
+            }
         }
 
     }
@@ -1717,6 +1757,10 @@ void LoadAllGameObj(){
     ObjModel wood_floor("../../data/wood_floor.obj");
     ComputeNormals(&wood_floor);
     BuildTrianglesAndAddToVirtualScene(&wood_floor);
+
+    ObjModel cow("../../data/cow.txt");
+    ComputeNormals(&cow);
+    BuildTrianglesAndAddToVirtualScene(&cow);
 }
 // Escrevemos na tela os ângulos de Euler definidos nas variáveis globais
 // g_AngleX, g_AngleY, e g_AngleZ.
