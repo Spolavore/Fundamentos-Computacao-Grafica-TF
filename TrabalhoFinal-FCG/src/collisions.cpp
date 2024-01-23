@@ -31,6 +31,7 @@
 bool isFallingCrate = false; // verifica se abaixo do player está presente uma caixa (usado tambem para plataformas)
 bool applyInstantFall = false; // controla se o jogador deve receber queda instantânea ( útil para situação como contato superior com objeto)
                                // * bater a "cabeca" em algo *
+float gravityAceleration = 1.1f;
 #define CRATE 0
 #define PLATAFORM 1
 
@@ -60,7 +61,7 @@ bool compareToBBox(glm::vec4 point_predicted, glm::vec3 bbox_min, glm::vec3 bbox
 // Função que verifica se ocorreu colissões com qualquer uma das caixas (objs) do jogo
 void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
                             glm::vec4 camera_view_vector, std::map<std::string, SceneObject>& g_VirtualScene,
-                            std::vector<glm::vec3> translation_models, bool *pode_pular){
+                            std::vector<glm::vec3> translation_models, bool *pode_pular, std::vector<glm::vec3> rotation_models){
 
 
     // Pega a reta para onde o usuario está indo
@@ -101,6 +102,7 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
     bbox_max_create *= glm::vec3(0.1f,0.1f,0.1f);
 
 
+
     // Expande levemente a bbox a fim de evitar bordas sensíves, impedindo que o usuário entre parcialmente
     // no objeto
     bbox_min_create = glm::vec3(bbox_min_create.x*1.5 , bbox_min_create.y*1.5, bbox_min_create.z*1.5 );
@@ -128,6 +130,9 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
             bbox_min_create = origin_bbox_min_create + translation_models[i];
             bbox_max_create = origin_bbox_max_create + translation_models[i];
 
+            // Aplica as matrizes de rotação
+            bbox_min_create *= glm::vec3(1.0f, 1.0f, 1.0f);
+            bbox_max_create *= glm::vec3(1.0f, 1.0f, 1.0f);
 
 
 
@@ -186,15 +191,20 @@ void verifyFalling(glm::vec4 *camera_c_position, float delta_t, bool *usuario_es
 
 
     // se a posição y da camera for maior do que 0.5 ( ela nao esta no chao ) ou está caindo
+
+
+    // Caso o usuário bata a cabeça em um objeto ele cai instantaneamente
     if(camera_c_position->y > 0.5 && isFallingCrate && applyInstantFall){
         *usuario_esta_pulando = false;
         *pode_pular = false;
-        *camera_c_position -= glm::vec4(0.0f, 0.2f, 0.0f, 0.0f) * fallingSpeed * delta_t;
+        *camera_c_position -= glm::vec4(0.0f, 0.2f, 0.0f, 0.0f) * fallingSpeed * delta_t * gravityAceleration;
+        gravityAceleration += 0.025f;
     }else if(camera_c_position->y > 0.5 && isFallingCrate && !*usuario_esta_pulando){
         *pode_pular = false;
-        *camera_c_position -= glm::vec4(0.0f, 0.2f, 0.0f, 0.0f) * fallingSpeed * delta_t;
-
+        *camera_c_position -= glm::vec4(0.0f, 0.2f, 0.0f, 0.0f) * fallingSpeed * delta_t * gravityAceleration;;
+        gravityAceleration += 0.025f;
     } else {
+        gravityAceleration = 1.0f;
         *usuario_esta_caindo = false;
         *pode_pular = true;
     }
@@ -256,7 +266,6 @@ void verifyPlataformCollisions(glm::vec4 camera_c_position,  glm::vec4 camera_vi
             }
 
             if(compareToBBox(foward_point_predicted,bbox_min_create, bbox_max_create)){
-                printf("BATEU");
                 hittedInFront = true;
             }
         }

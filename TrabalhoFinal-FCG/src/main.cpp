@@ -235,6 +235,7 @@ GLuint g_NumLoadedTextures = 0;
 
 
 std::vector<glm::vec3>  crates_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas caixas
+std::vector<glm::vec3>  crates_rotation_models; // vetor contendo todas as transformações de rotação de modelo aplicadas nas caixas
 std::vector<glm::vec3>  plataforms_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas plataformas
 int main(int argc, char* argv[])
 {
@@ -420,7 +421,7 @@ int main(int argc, char* argv[])
             }
             camera_position_c = last_camera_c_point;
 
-            verifyCratesCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene, crates_translation_models, &pode_pular);
+            verifyCratesCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene, crates_translation_models, &pode_pular, crates_rotation_models);
             verifyPlataformCollisions(camera_position_c, camera_view_vector, g_VirtualScene, plataforms_translation_models, user_can_move_in_platforms);
             ApplyFreeCamera(&camera_position_c, &camera_view_vector, &camera_up_vector, &delta_t, &speed, &last_camera_c_point);
 
@@ -449,7 +450,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -20.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -484,7 +485,7 @@ int main(int argc, char* argv[])
         #define PLATAFORM 1
         #define FLOOR 2
         #define WOODFLOOR 3
-
+        // ==================================  FASE 1 ==================================================================
             float translate_x = 0.0f;
             float translate_y = 0.0f;
             float translate_z = 0.0f;
@@ -499,30 +500,18 @@ int main(int argc, char* argv[])
 
                 // verifica se o vetor já está no vetor, se não está adiciona nele
                 glm::vec3 translated_model = glm::vec3(translate_x, translate_y, translate_z);
-                // Verifica se o vetor já está no vetor, se não está, adiciona nele
+                VerifyIfExistInVector(&crates_translation_models, translated_model);
 
-                VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
+                // adiciona também na lista o vetor do model de rotação, mesmo que ele não seja usado aqui precisamos
+                // adicionar pois no jogo há caixas que utilizam dessa rotação
+                glm::vec3 rotation_model = glm::vec3(1.0f, 1.0f, 1.0f);
+                VerifyIfExistInVector(&crates_rotation_models, rotation_model);
                 translate_x += 1.0f;
                 translate_y += 0.5f;
             }
 
-            translate_x = 5.0;
-            translate_y = 1.5f;
-            translate_z = 2.2f;
-            for(int i = 0; i < 6; i++){
-                model = Matrix_Translate(translate_x, translate_y, translate_z) * Matrix_Scale(0.1f,0.1f,0.1f);
-                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-                glUniform1i(g_object_id_uniform, PLATAFORM);
-                DrawVirtualObject("Crate_Plane.005");
-                VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
-
-                translate_z += 1.3f;
-            }
-
-
-
             float plataforme_translate_x = 5.0f;
-            float plataforme_translate_y = 0.5f;
+            float plataforme_translate_y = 2.0f;
             float plataforme_translate_z = 0.0f;
             model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -531,7 +520,133 @@ int main(int argc, char* argv[])
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
 
+            // ==================================  FASE 1 ==================================================================
 
+
+             // ==================================  FASE 2 ==================================================================
+            translate_x = 5.0;
+            translate_y = 1.5f;
+            translate_z = 2.2f;
+            for(int i = 0; i < 6; i++){
+                model = Matrix_Translate(translate_x, translate_y, translate_z) * Matrix_Scale(0.1f,0.1f,0.1f);
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(g_object_id_uniform, PLATAFORM);
+                DrawVirtualObject("Crate_Plane.005");
+
+                VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
+
+                // adiciona também na lista o vetor do model de rotação, mesmo que ele não seja usado aqui precisamos
+                // adicionar pois no jogo há caixas que utilizam dessa rotação
+                glm::vec3 rotation_model = glm::vec3(1.0f, 1.0f, 1.0f);
+                VerifyIfExistInVector(&crates_rotation_models, rotation_model);
+
+                translate_z += 1.3f;
+            }
+
+
+
+                                    //coordenada da ultima caixa da segunda fase
+            plataforme_translate_z = 2.5f + (1.3f * 6);
+            model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WOODFLOOR);
+            DrawVirtualObject("cartoon wooden floor");
+
+            VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
+
+
+            // ==================================  FASE 2 ==================================================================
+
+
+            // ==================================  FASE 3 ==================================================================
+
+            translate_x = 3.0f ;
+            translate_y = 1.5f ;
+            translate_z = 11.0f;
+
+            for(int i = 0; i < 1; i++){
+                  model = Matrix_Translate(translate_x, translate_y, translate_z) *
+                                           Matrix_Rotate_X(g_AngleX) *
+                                           Matrix_Rotate_Y(g_AngleY) *
+                                           Matrix_Rotate_Z(g_AngleZ)
+                                           * Matrix_Scale(0.1f,0.1f,0.1f);
+                  glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                  glUniform1i(g_object_id_uniform, PLATAFORM);
+                  DrawVirtualObject("Crate_Plane.005");
+                  VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
+
+                // adiciona também na lista o vetor do model de rotação, mesmo que ele não seja usado aqui precisamos
+                // adicionar pois no jogo há caixas que utilizam dessa rotação
+                glm::vec3 rotation_model = glm::vec3(g_AngleX, g_AngleY, g_AngleZ);
+                VerifyIfExistInVector(&crates_rotation_models, rotation_model);
+                  translate_x -= 1.0f;
+            }
+
+
+            translate_x = 2.0f;
+            translate_y = 2.0f;
+            translate_z = 10.0f;
+            for(int i = 0; i < 7; i++){
+                model = Matrix_Translate(translate_x, translate_y, translate_z) * Matrix_Scale(0.1f,0.1f,0.1f);
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(g_object_id_uniform, PLATAFORM);
+                DrawVirtualObject("Crate_Plane.005");
+                VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
+                translate_y += 0.5f;
+                translate_x -= 1.0f;
+
+                if(i % 2 == 0){
+                    translate_z -= 0.5f;
+                }else {
+                    translate_z += 1.0f;
+                }
+            }
+
+
+            plataforme_translate_x = -5.5f;
+            plataforme_translate_y = 5.5f;
+            plataforme_translate_z = 10.0f;
+            model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WOODFLOOR);
+            DrawVirtualObject("cartoon wooden floor");
+
+            VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
+
+            // ==================================  FASE 3 ==================================================================
+
+            // ==================================  FASE 4 ==================================================================
+            translate_x = -5.5f;
+            translate_y = 5.4f;
+            translate_z = 8.5f;
+
+            for(int i = 0; i < 10; i++){
+                model = Matrix_Translate(translate_x, translate_y, translate_z) * Matrix_Scale(0.1f,0.1f,0.1f);
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(g_object_id_uniform, PLATAFORM);
+                DrawVirtualObject("Crate_Plane.005");
+                VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
+                translate_y += 0.5f;
+
+                if(i % 2 != 0){
+                    translate_z -= 0.0f;
+                    translate_x += 1.0f;
+                } else{
+                    translate_z -= 1.0f;
+                    translate_x += 1.0f;
+                }
+            }
+
+            plataforme_translate_x = -5.0f;
+            plataforme_translate_y = 12.4f;
+            plataforme_translate_z = 11.0f;
+            model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WOODFLOOR);
+            DrawVirtualObject("cartoon wooden floor");
+
+            VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
+            // ==================================  FASE 4 ==================================================================
 
             model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.0f, 3.0f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -544,7 +659,7 @@ int main(int argc, char* argv[])
 
 
 
-        verifyFalling(&last_camera_c_point, delta_t, &usuario_esta_caindo, &pode_pular, &usuario_esta_pulando);
+            verifyFalling(&last_camera_c_point, delta_t, &usuario_esta_caindo, &pode_pular, &usuario_esta_pulando);
 
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -1332,6 +1447,67 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 // tecla do teclado. Veja http://www.glfw.org/docs/latest/input_guide.html#input_key
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
+    // O código abaixo implementa a seguinte lógica:
+    //   Se apertar tecla X       então g_AngleX += delta;
+    //   Se apertar tecla shift+X então g_AngleX -= delta;
+    //   Se apertar tecla Y       então g_AngleY += delta;
+    //   Se apertar tecla shift+Y então g_AngleY -= delta;
+    //   Se apertar tecla Z       então g_AngleZ += delta;
+    //   Se apertar tecla shift+Z então g_AngleZ -= delta;
+
+
+    float delta = 3.141592 / 16; // 22.5 graus, em radianos.
+
+    if (key == GLFW_KEY_X && action == GLFW_PRESS)
+    {
+        printf("x");
+        g_AngleX += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
+    }
+
+    if (key == GLFW_KEY_Y && action == GLFW_PRESS)
+    {
+        g_AngleY += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
+    }
+    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
+    {
+        g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
+    }
+
+    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
+    if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+    {
+        g_AngleX = 0.0f;
+        g_AngleY = 0.0f;
+        g_AngleZ = 0.0f;
+
+    }
+
+    // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
+    if (key == GLFW_KEY_P && action == GLFW_PRESS)
+    {
+        g_UsePerspectiveProjection = true;
+    }
+
+    // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
+    if (key == GLFW_KEY_O && action == GLFW_PRESS)
+    {
+        g_UsePerspectiveProjection = false;
+    }
+
+    // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
+    if (key == GLFW_KEY_H && action == GLFW_PRESS)
+    {
+        g_ShowInfoText = !g_ShowInfoText;
+    }
+
+
+    // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+    {
+        LoadShadersFromFiles();
+        fprintf(stdout,"Shaders recarregados!\n");
+        fflush(stdout);
+    }
 
     // ===================
     // Não modifique este loop! Ele é utilizando para correção automatizada dos
@@ -1456,65 +1632,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
 
-    // O código abaixo implementa a seguinte lógica:
-    //   Se apertar tecla X       então g_AngleX += delta;
-    //   Se apertar tecla shift+X então g_AngleX -= delta;
-    //   Se apertar tecla Y       então g_AngleY += delta;
-    //   Se apertar tecla shift+Y então g_AngleY -= delta;
-    //   Se apertar tecla Z       então g_AngleZ += delta;
-    //   Se apertar tecla shift+Z então g_AngleZ -= delta;
 
-    float delta = 3.141592 / 16; // 22.5 graus, em radianos.
-
-    if (key == GLFW_KEY_X && action == GLFW_PRESS)
-    {
-        g_AngleX += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-    {
-        g_AngleY += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-    {
-        g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    {
-        g_AngleX = 0.0f;
-        g_AngleY = 0.0f;
-        g_AngleZ = 0.0f;
-
-    }
-
-    // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = true;
-    }
-
-    // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
-    if (key == GLFW_KEY_O && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = false;
-    }
-
-    // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
-    if (key == GLFW_KEY_H && action == GLFW_PRESS)
-    {
-        g_ShowInfoText = !g_ShowInfoText;
-    }
-
-
-    // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
-    if (key == GLFW_KEY_R && action == GLFW_PRESS)
-    {
-        LoadShadersFromFiles();
-        fprintf(stdout,"Shaders recarregados!\n");
-        fflush(stdout);
-    }
     }
 }
 
