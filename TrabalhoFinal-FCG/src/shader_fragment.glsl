@@ -22,9 +22,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-
 // Identificador que define qual objeto está sendo desenhado no momento
-
 #define PLATAFORM 1
 #define FLOOR 2
 #define WOODFLOOR 3
@@ -51,12 +49,14 @@ out vec4 color;
 
 void main()
 {
-
+    // se interpolação for de gouraud então só repassamos o valor de vertex_color
     if(gouraud_out == 1){
         color.a = 1;
         color.rgb = vertex_color;
         return;
     }
+
+    // CALCULO DA COR
 
     // Obtemos a posição da câmera utilizando a inversa da matriz que define o
     // sistema de coordenadas da câmera.
@@ -82,10 +82,9 @@ void main()
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
-
+    // Vetor e angulo utilizados para calcular a iluminação de blinn-phong                  *ERRO
     vec4 half_way = normalize(v + l);
     float anguloEntre_n_h = dot(n, half_way);
-
 
     // Vetor que define o sentido da reflexão especular ideal.
     float r_x = -l.x + 2*n.x*max(dot(n,l), 0);
@@ -100,19 +99,19 @@ void main()
     vec3 Ka; // Refletância ambiente
     float q; // Expoente especular para o modelo de iluminação de Phong
 
+    // Espectro da fonte de iluminação
+    vec3 I = vec3(1.0,1.0,1.0); // PREENCH AQUI o espectro da fonte de luz
+
+    // Espectro da luz ambiente
+    vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
+
     if (object_id == SPHERE)
     {
         // Propriedades espectrais da esfera
         Kd = vec3(0.8,0.4,0.08);
         Ks = vec3(0.1,0.1,0.1);
         Ka = vec3(0.4,0.2,0.04);
-        q = 10.0;
-
-        // Espectro da fonte de iluminação
-        vec3 I = vec3(1.0,1.0,1.0); // PREENCH AQUI o espectro da fonte de luz
-
-        // Espectro da luz ambiente
-        vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
+        q = 50.0;
 
         // Termo difuso utilizando a lei dos cossenos de Lambert
         float lambert_x = Kd.x * I.x * max(0,dot(n,l));
@@ -162,6 +161,7 @@ void main()
     float U = 0.0;
     float V = 0.0;
     vec3 Kd0;
+
     if ( object_id == PLATAFORM )
     {
         // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
@@ -191,10 +191,8 @@ void main()
         V = (phi + (M_PI/2))/ M_PI;
 
         Kd0  = texture(TextureImage0, vec2(U,V)).rgb;
-
-
-
     }
+
     else    if ( object_id == COW )
     {
         // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
@@ -225,9 +223,8 @@ void main()
 
 
         Kd0  = texture(TextureImage3, vec2(U,V)).rgb;
-
-
     }
+
     else if ( object_id == WOODFLOOR)
     {
         // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
@@ -262,12 +259,6 @@ void main()
         Ka = vec3(0.04,0.2,0.4);
         q = 3.0;
 
-        // Espectro da fonte de iluminação
-        vec3 I = vec3(1.0,1.0,1.0); // PREENCH AQUI o espectro da fonte de luz
-
-        // Espectro da luz ambiente
-        vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
-
         // Termo difuso utilizando a lei dos cossenos de Lambert
         float lambert_x = Kd.x * I.x * max(0,dot(n,l));
         float lambert_y = Kd.y * I.y * max(0,dot(n,l));
@@ -280,7 +271,7 @@ void main()
         float ambiente_z = Ka.z * Ia.z;
         vec3 ambient_term = vec3(ambiente_x, ambiente_y, ambiente_z); // PREENCHA AQUI o termo ambiente
 
-
+        // Termo especular utilizando o modelo de iluminação de Blinn-Phong
         float produto_r_v_pot_q = pow(max(anguloEntre_n_h, 0.0f), q);
         float phong_specular_x = Ks.x * I.x * produto_r_v_pot_q;
         float phong_specular_y = Ks.y * I.y * produto_r_v_pot_q;

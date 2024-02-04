@@ -128,7 +128,7 @@ void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector
 void LoadAllGameObj(); // Carrega todos os objetos do jogo
 void Jump(glm::vec4 *camera_c_position, float *delta_t); // Aplica o Pulo
 void VerifyIfExistInVector(std::vector<glm::vec3> *translation_models, glm::vec3 newModel); //Verifica se o vetor ja foi adicionado a determinada lista de modelos de translacao
-glm::vec4 CurvaBezier(double seconds);
+glm::vec4 CurvaBezier(double seconds);  //Função que calcula a posição de um ponto em uma curva de bezier em função do tempo
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -236,7 +236,7 @@ GLuint g_NumLoadedTextures = 0;
 
 float cow_y_rotation = 0.0f; // controla a rotação da vaca (é automaticamente incrementado)
 
-std::vector<glm::vec3>  sphere_translation_models;
+std::vector<glm::vec3>  sphere_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas esferas
 std::vector<glm::vec3>  crates_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas caixas
 std::vector<glm::vec3>  crates_rotation_models; // vetor contendo todas as transformações de rotação de modelo aplicadas nas caixas
 std::vector<glm::vec3>  plataforms_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas plataformas
@@ -244,6 +244,7 @@ std::vector<glm::vec3>  cow_translation_models;
 float jump_initial_time = 1.0f;
 float jump_current_time = 0.0f;
 #define MAX_TEMPO_PULO 0.2f
+
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -269,6 +270,7 @@ int main(int argc, char* argv[])
         std::exit(EXIT_FAILURE);
     }
 
+    // Variavel utilizada para calcular a função de Bezier
     double seconds = (double)glfwGetTime();
 
     // Definimos o callback para impressão de erros da GLFW no terminal
@@ -354,6 +356,7 @@ int main(int argc, char* argv[])
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
+    // Variáveis que armazenam a localização dos shader para passar informação
     GLuint vertex_shader = LoadShader_Vertex("../../src/shader_vertex.glsl");
     GLuint fragment_shader = LoadShader_Fragment("../../src/shader_fragment.glsl");
 
@@ -388,7 +391,7 @@ int main(int argc, char* argv[])
         float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
         float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
 
-         // Atualiza delta de tempo
+        // Atualiza delta de tempo
         float current_time = (float)glfwGetTime();
 
         delta_t = current_time - prev_time;
@@ -498,31 +501,34 @@ int main(int argc, char* argv[])
         #define SPHERE 5
 
 
-
         seconds = (double)glfwGetTime();
+
+        // calcula a translação das esferas com uma curva de bezier
         glm::vec4 translacao_esferas = CurvaBezier(seconds);
 
-        // Desenhamos o modelo da esfera
-        float x_esfera = 2.0f + translacao_esferas.x;
-        float y_esfera = 0.5f + translacao_esferas.y;
+            // Desenhamos o modelo da esfera
+        float x_esfera = 6.0f + translacao_esferas.x;
+        float y_esfera = 5.0f + translacao_esferas.y;
         float z_esfera = 1.0f + translacao_esferas.z;
         model = Matrix_Translate(x_esfera, y_esfera, z_esfera) *  Matrix_Scale(0.5f, 0.5f, 0.5f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
+            // Informa que a esfera deve ser interpolada com Gouraud
         glUniform1i(g_gouraud_uniform, 1);
         DrawVirtualObject("the_sphere");
-        // verifica se o vetor já está no vetor, se não está adiciona nele
+            // verifica se o vetor já está no vetor, se não está adiciona nele
         glm::vec3 translated_model = glm::vec3(x_esfera, y_esfera, z_esfera);
         VerifyIfExistInVector(&sphere_translation_models, translated_model);
 
-        // Desenhamos o modelo da esfera
+            // Desenhamos o modelo da esfera
         z_esfera = -1.0f + translacao_esferas.z;
         model = Matrix_Translate(x_esfera, y_esfera, z_esfera) *  Matrix_Scale(0.5f, 0.5f, 0.5f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
+            // Informa que a esfera deve ser interpolada com Phong
         glUniform1i(g_gouraud_uniform, 0);
-        //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
         DrawVirtualObject("the_sphere");
+            // verifica se o vetor já está no vetor, se não está adiciona nele
         translated_model = glm::vec3(x_esfera, y_esfera, z_esfera);
         VerifyIfExistInVector(&sphere_translation_models, translated_model);
 
@@ -562,7 +568,6 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WOODFLOOR);
             glUniform1i(g_gouraud_uniform, 0);
-            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cartoon wooden floor");
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
@@ -579,7 +584,6 @@ int main(int argc, char* argv[])
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, PLATAFORM);
                 glUniform1i(g_gouraud_uniform, 0);
-                //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
                 DrawVirtualObject("Crate_Plane.005");
 
                 VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
@@ -600,7 +604,6 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WOODFLOOR);
             glUniform1i(g_gouraud_uniform, 0);
-            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cartoon wooden floor");
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
@@ -624,7 +627,6 @@ int main(int argc, char* argv[])
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, PLATAFORM);
                 glUniform1i(g_gouraud_uniform, 0);
-                //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
                 DrawVirtualObject("Crate_Plane.005");
                 VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
 
@@ -644,7 +646,6 @@ int main(int argc, char* argv[])
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, PLATAFORM);
                 glUniform1i(g_gouraud_uniform, 0);
-                //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
                 DrawVirtualObject("Crate_Plane.005");
                 VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
                 translate_y += 0.5f;
@@ -665,7 +666,6 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WOODFLOOR);
             glUniform1i(g_gouraud_uniform, 0);
-            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cartoon wooden floor");
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
@@ -682,7 +682,6 @@ int main(int argc, char* argv[])
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, PLATAFORM);
                 glUniform1i(g_gouraud_uniform, 0);
-                //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
                 DrawVirtualObject("Crate_Plane.005");
                 VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
                 translate_y += 0.5f;
@@ -703,7 +702,6 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WOODFLOOR);
             glUniform1i(g_gouraud_uniform, 0);
-            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cartoon wooden floor");
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
@@ -716,7 +714,6 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, COW);
             glUniform1i(g_gouraud_uniform, 0);
-            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cow");
 
             VerifyIfExistInVector(&cow_translation_models, glm::vec3(cow_translate_x, cow_translate_y, cow_translate_z));
@@ -727,7 +724,6 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, FLOOR);
             glUniform1i(g_gouraud_uniform, 0);
-            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("10450_Rectangular_Grass_Patch_v1");
 
 
@@ -913,7 +909,7 @@ void LoadShadersFromFiles()
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
     g_bbox_min_uniform   = glGetUniformLocation(g_GpuProgramID, "bbox_min");
     g_bbox_max_uniform   = glGetUniformLocation(g_GpuProgramID, "bbox_max");
-    g_gouraud_uniform    = glGetUniformLocation(g_GpuProgramID, "gouraud");
+    g_gouraud_uniform    = glGetUniformLocation(g_GpuProgramID, "gouraud");  //Variável "gouraud" em shader_vertex.glsl
 
     // Variáveis em "shader_fragment.glsl" para acesso das imagens de textura
     glUseProgram(g_GpuProgramID);
