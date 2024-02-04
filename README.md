@@ -105,5 +105,5 @@ Para o controle do mouse e suas derivações, as funções glfwSetScrollCallback
 ### Atalhos de interação
   - C : para ativar camera look-at
   - X : para movimentar objetos específicos na horizontal ( sentido positivo )
-  - Y : para movimentar objetos específicos na horizontal ( sentido negativo )
+  - Z : para movimentar objetos específicos na horizontal ( sentido negativo )
     
