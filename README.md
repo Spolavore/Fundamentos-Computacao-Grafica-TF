@@ -101,6 +101,7 @@ Para o controle do mouse e suas derivações, as funções glfwSetScrollCallback
   - S : para mover-se para trás
   - D : para mover-se para direita
   - ESPAÇO : para pular
+  - SHIFT-ESQUERDO: para correr
 
 ### Atalhos de interação
   - C : para ativar camera look-at
