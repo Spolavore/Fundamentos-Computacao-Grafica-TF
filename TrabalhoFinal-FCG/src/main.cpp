@@ -5,7 +5,7 @@
 //    INF01047 Fundamentos de Computação Gráfica
 //               Prof. Eduardo Gastal
 //
-//                   LABORATÓRIO 5
+//                  Trabalho Final
 //
 
 // Arquivos "headers" padrões de C podem ser incluídos em um
@@ -128,7 +128,7 @@ void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector
 void LoadAllGameObj(); // Carrega todos os objetos do jogo
 void Jump(glm::vec4 *camera_c_position, float *delta_t); // Aplica o Pulo
 void VerifyIfExistInVector(std::vector<glm::vec3> *translation_models, glm::vec3 newModel); //Verifica se o vetor ja foi adicionado a determinada lista de modelos de translacao
-
+glm::vec4 CurvaBezier(double seconds);
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -195,7 +195,7 @@ bool tecla_A_pressionada = false;
 bool tecla_S_pressionada = false;
 bool tecla_C_pressionada = false;
 bool shift_pressionado = false;
-bool espaço_pressionado = false;
+bool espaco_pressionado = false;
 
 
 // variaveis de controle para saber se o jogador esta pulando ou caindo
@@ -229,12 +229,14 @@ GLint g_projection_uniform;
 GLint g_object_id_uniform;
 GLint g_bbox_min_uniform;
 GLint g_bbox_max_uniform;
+GLint g_gouraud_uniform;
 
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
 float cow_y_rotation = 0.0f; // controla a rotação da vaca (é automaticamente incrementado)
 
+std::vector<glm::vec3>  sphere_translation_models;
 std::vector<glm::vec3>  crates_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas caixas
 std::vector<glm::vec3>  crates_rotation_models; // vetor contendo todas as transformações de rotação de modelo aplicadas nas caixas
 std::vector<glm::vec3>  plataforms_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas plataformas
@@ -255,7 +257,7 @@ int main(int argc, char* argv[])
     float prev_time = (float) glfwGetTime();
 
     // Váriaveis utilizadas para salvar as configurações da câmera antes de
-    // mudara para a camera look at
+    // mudar para a camera look at
     bool saveCameraInfos = true;
     float last_g_Distance = g_CameraDistance;
     float last_phi = g_CameraPhi;
@@ -266,6 +268,8 @@ int main(int argc, char* argv[])
         fprintf(stderr, "ERROR: glfwInit() failed.\n");
         std::exit(EXIT_FAILURE);
     }
+
+    double seconds = (double)glfwGetTime();
 
     // Definimos o callback para impressão de erros da GLFW no terminal
     glfwSetErrorCallback(ErrorCallback);
@@ -349,6 +353,9 @@ int main(int argc, char* argv[])
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+    GLuint vertex_shader = LoadShader_Vertex("../../src/shader_vertex.glsl");
+    GLuint fragment_shader = LoadShader_Fragment("../../src/shader_fragment.glsl");
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -484,11 +491,44 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-
         #define PLATAFORM 1
         #define FLOOR 2
         #define WOODFLOOR 3
         #define COW 4
+        #define SPHERE 5
+
+
+
+        seconds = (double)glfwGetTime();
+        glm::vec4 translacao_esferas = CurvaBezier(seconds);
+
+        // Desenhamos o modelo da esfera
+        float x_esfera = 2.0f + translacao_esferas.x;
+        float y_esfera = 0.5f + translacao_esferas.y;
+        float z_esfera = 1.0f + translacao_esferas.z;
+        model = Matrix_Translate(x_esfera, y_esfera, z_esfera) *  Matrix_Scale(0.5f, 0.5f, 0.5f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_gouraud_uniform, 1);
+        DrawVirtualObject("the_sphere");
+        // verifica se o vetor já está no vetor, se não está adiciona nele
+        glm::vec3 translated_model = glm::vec3(x_esfera, y_esfera, z_esfera);
+        VerifyIfExistInVector(&sphere_translation_models, translated_model);
+
+        // Desenhamos o modelo da esfera
+        z_esfera = -1.0f + translacao_esferas.z;
+        model = Matrix_Translate(x_esfera, y_esfera, z_esfera) *  Matrix_Scale(0.5f, 0.5f, 0.5f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_gouraud_uniform, 0);
+        //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
+        DrawVirtualObject("the_sphere");
+        translated_model = glm::vec3(x_esfera, y_esfera, z_esfera);
+        VerifyIfExistInVector(&sphere_translation_models, translated_model);
+
+
+
+
         // ==================================  FASE 1 ==================================================================
             float translate_x = 0.0f;
             float translate_y = 0.0f;
@@ -499,8 +539,9 @@ int main(int argc, char* argv[])
                 model =  Matrix_Translate(translate_x, translate_y,translate_z) *  Matrix_Scale(0.1f, 0.1f, 0.1f);
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, PLATAFORM);
+                glUniform1i(g_gouraud_uniform, 0);
+                glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
                 DrawVirtualObject("Crate_Plane.005");
-
 
                 // verifica se o vetor já está no vetor, se não está adiciona nele
                 glm::vec3 translated_model = glm::vec3(translate_x, translate_y, translate_z);
@@ -520,6 +561,8 @@ int main(int argc, char* argv[])
             model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WOODFLOOR);
+            glUniform1i(g_gouraud_uniform, 0);
+            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cartoon wooden floor");
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
@@ -535,6 +578,8 @@ int main(int argc, char* argv[])
                 model = Matrix_Translate(translate_x, translate_y, translate_z) * Matrix_Scale(0.1f,0.1f,0.1f);
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, PLATAFORM);
+                glUniform1i(g_gouraud_uniform, 0);
+                //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
                 DrawVirtualObject("Crate_Plane.005");
 
                 VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
@@ -554,6 +599,8 @@ int main(int argc, char* argv[])
             model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WOODFLOOR);
+            glUniform1i(g_gouraud_uniform, 0);
+            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cartoon wooden floor");
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
@@ -569,21 +616,23 @@ int main(int argc, char* argv[])
             translate_z = 11.0f;
 
             for(int i = 0; i < 1; i++){
-                  model = Matrix_Translate(translate_x, translate_y, translate_z) *
+                model = Matrix_Translate(translate_x, translate_y, translate_z) *
                                            Matrix_Rotate_X(g_AngleX) *
                                            Matrix_Rotate_Y(g_AngleY) *
                                            Matrix_Rotate_Z(g_AngleZ)
                                            * Matrix_Scale(0.1f,0.1f,0.1f);
-                  glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-                  glUniform1i(g_object_id_uniform, PLATAFORM);
-                  DrawVirtualObject("Crate_Plane.005");
-                  VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(g_object_id_uniform, PLATAFORM);
+                glUniform1i(g_gouraud_uniform, 0);
+                //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
+                DrawVirtualObject("Crate_Plane.005");
+                VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
 
                 // adiciona também na lista o vetor do model de rotação, mesmo que ele não seja usado aqui precisamos
                 // adicionar pois no jogo há caixas que utilizam dessa rotação
                 glm::vec3 rotation_model = glm::vec3(g_AngleX, g_AngleY, g_AngleZ);
                 VerifyIfExistInVector(&crates_rotation_models, rotation_model);
-                  translate_x -= 1.0f;
+                translate_x -= 1.0f;
             }
 
 
@@ -594,6 +643,8 @@ int main(int argc, char* argv[])
                 model = Matrix_Translate(translate_x, translate_y, translate_z) * Matrix_Scale(0.1f,0.1f,0.1f);
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, PLATAFORM);
+                glUniform1i(g_gouraud_uniform, 0);
+                //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
                 DrawVirtualObject("Crate_Plane.005");
                 VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
                 translate_y += 0.5f;
@@ -613,6 +664,8 @@ int main(int argc, char* argv[])
             model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WOODFLOOR);
+            glUniform1i(g_gouraud_uniform, 0);
+            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cartoon wooden floor");
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
@@ -628,6 +681,8 @@ int main(int argc, char* argv[])
                 model = Matrix_Translate(translate_x, translate_y, translate_z) * Matrix_Scale(0.1f,0.1f,0.1f);
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, PLATAFORM);
+                glUniform1i(g_gouraud_uniform, 0);
+                //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
                 DrawVirtualObject("Crate_Plane.005");
                 VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
                 translate_y += 0.5f;
@@ -647,6 +702,8 @@ int main(int argc, char* argv[])
             model =  Matrix_Translate(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WOODFLOOR);
+            glUniform1i(g_gouraud_uniform, 0);
+            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cartoon wooden floor");
 
             VerifyIfExistInVector(&plataforms_translation_models, glm::vec3(plataforme_translate_x,plataforme_translate_y,plataforme_translate_z));
@@ -658,6 +715,8 @@ int main(int argc, char* argv[])
                      * Matrix_Rotate_Y(cow_y_rotation);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, COW);
+            glUniform1i(g_gouraud_uniform, 0);
+            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("cow");
 
             VerifyIfExistInVector(&cow_translation_models, glm::vec3(cow_translate_x, cow_translate_y, cow_translate_z));
@@ -667,12 +726,9 @@ int main(int argc, char* argv[])
             model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.0f, 3.0f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, FLOOR);
+            glUniform1i(g_gouraud_uniform, 0);
+            //glUniform1i(glGetUniformLocation(fragment_shader, "gouraud"), 0);
             DrawVirtualObject("10450_Rectangular_Grass_Patch_v1");
-
-
-
-
-
 
 
             verifyFalling(&last_camera_c_point, delta_t, &usuario_esta_caindo, &pode_pular, &usuario_esta_pulando);
@@ -857,6 +913,7 @@ void LoadShadersFromFiles()
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
     g_bbox_min_uniform   = glGetUniformLocation(g_GpuProgramID, "bbox_min");
     g_bbox_max_uniform   = glGetUniformLocation(g_GpuProgramID, "bbox_max");
+    g_gouraud_uniform    = glGetUniformLocation(g_GpuProgramID, "gouraud");
 
     // Variáveis em "shader_fragment.glsl" para acesso das imagens de textura
     glUseProgram(g_GpuProgramID);
@@ -948,7 +1005,7 @@ void ApplyFreeCamera(glm::vec4 *camera_c_position, glm::vec4 *camera_view_vector
             *speed = 1.0;
         }
 
-        if(espaço_pressionado){
+        if(espaco_pressionado){
             Jump(camera_c_position,delta_t);
             usuario_esta_caindo = true;
         }
@@ -1163,7 +1220,7 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         glBindBuffer(GL_ARRAY_BUFFER, VBO_texture_coefficients_id);
         glBufferData(GL_ARRAY_BUFFER, texture_coefficients.size() * sizeof(float), NULL, GL_STATIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, texture_coefficients.size() * sizeof(float), texture_coefficients.data());
-        location = 2; // "(location = 1)" em "shader_vertex.glsl"
+        location = 2; // "(location = 2)" em "shader_vertex.glsl"
         number_of_dimensions = 2; // vec2 em "shader_vertex.glsl"
         glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(location);
@@ -1575,11 +1632,11 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
        if (action == GLFW_PRESS){
 
             // Usuário apertou a tecla D, então atualizamos o estado para pressionada
-            espaço_pressionado= true;
+            espaco_pressionado= true;
 
         }else if (action == GLFW_RELEASE){
             // Usuário largou a tecla D, então atualizamos o estado para NÃO pressionada
-            espaço_pressionado = false;
+            espaco_pressionado = false;
             if(jump_current_time - jump_initial_time <= MAX_TEMPO_PULO){
                 pode_pular = false;
                 usuario_esta_pulando = false;
@@ -1757,6 +1814,10 @@ void LoadAllGameObj(){
     ObjModel wood_floor("../../data/wood_floor.obj");
     ComputeNormals(&wood_floor);
     BuildTrianglesAndAddToVirtualScene(&wood_floor);
+
+    ObjModel sphere("../../data/sphere.obj");
+    ComputeNormals(&sphere);
+    BuildTrianglesAndAddToVirtualScene(&sphere);
 
     ObjModel cow("../../data/cow.txt");
     ComputeNormals(&cow);
@@ -1996,6 +2057,44 @@ void PrintObjModelInfo(ObjModel* model)
     printf("\n");
   }
 }
+
+glm::vec4 CurvaBezier(double seconds){
+
+    while (seconds > 20.0){
+        seconds -= 20.0;
+    }
+
+    double tempo = seconds/10;
+
+    if (seconds > 10.0)
+        tempo = 2.0 - tempo;
+
+    glm::vec4 p1 = glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+    glm::vec4 p2 = glm::vec4(-1.0f,  1.0f, 0.0f, 1.0f);
+    glm::vec4 p3 = glm::vec4( 1.0f,  1.0f, 0.0f, 1.0f);
+    glm::vec4 p4 = glm::vec4( 1.0f, -1.0f, 0.0f, 1.0f);
+
+    glm::vec4 vetor_p1_p2 = glm::vec4(tempo*(p2.x-p1.x),tempo*(p2.y-p1.y),tempo*(p2.z-p1.z), 0.0f);
+    glm::vec4 vetor_p2_p3 = glm::vec4(tempo*(p3.x-p2.x),tempo*(p3.y-p2.y),tempo*(p3.z-p2.z), 0.0f);
+    glm::vec4 vetor_p3_p4 = glm::vec4(tempo*(p4.x-p3.x),tempo*(p4.y-p3.y),tempo*(p4.z-p3.z), 0.0f);
+
+    glm::vec4 c12 = glm::vec4(p1 + vetor_p1_p2);
+    glm::vec4 c23 = glm::vec4(p2 + vetor_p2_p3);
+    glm::vec4 c34 = glm::vec4(p3 + vetor_p3_p4);
+
+    glm::vec4 vetor_c12_c23 = glm::vec4(tempo*(c23.x - c12.x),tempo*(c23.y - c12.y),tempo*(c23.z - c12.z), 0.0f);
+    glm::vec4 vetor_c23_c34 = glm::vec4(tempo*(c34.x - c23.x),tempo*(c34.y - c23.y),tempo*(c34.z - c23.z), 0.0f);
+
+    glm::vec4 c123 = glm::vec4(c12 + vetor_c12_c23);
+    glm::vec4 c234 = glm::vec4(c23 + vetor_c23_c34);
+
+    glm::vec4 vetor_c123_c234 = glm::vec4(tempo*(c234.x - c123.x),tempo*(c234.y - c123.y),tempo*(c234.z - c123.z), 0.0f);
+
+    glm::vec4 c = glm::vec4(c123 + vetor_c123_c234);
+
+    return c;
+}
+
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
 // vim: set spell spelllang=pt_br :
