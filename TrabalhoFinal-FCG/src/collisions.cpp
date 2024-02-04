@@ -61,7 +61,7 @@ bool compareToBBox(glm::vec4 point_predicted, glm::vec3 bbox_min, glm::vec3 bbox
 // Função que verifica se ocorreu colissões com qualquer uma das caixas (objs) do jogo
 void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
                             glm::vec4 camera_view_vector, std::map<std::string, SceneObject>& g_VirtualScene,
-                            std::vector<glm::vec3> translation_models, bool *pode_pular, std::vector<glm::vec3> rotation_models){
+                            std::vector<glm::vec3> translation_models, bool *pode_pular, std::vector<glm::vec3> dinamic_crate_translation_model){
 
 
     // Pega a reta para onde o usuario está indo
@@ -124,11 +124,18 @@ void verifyCratesCollisions(bool user_can_move[], glm::vec4 camera_c_position,
     bool can_move_behind = true;
     bool hittedBoxOnFall = false;
     if(translation_models.size() != 0){
-        for(int i = 0; i < translation_models.size(); i++){
+        for(int i = 0; i < translation_models.size() + 1; i++){
 
-            // Aplica as matrizes de translação no objeto
-            bbox_min_create = origin_bbox_min_create + translation_models[i];
-            bbox_max_create = origin_bbox_max_create + translation_models[i];
+            // Caso todas as caixas nomais já tenham sido verificadas, verifica a caixa que o usuário pode mover
+            if(i >= translation_models.size()){
+                bbox_min_create = origin_bbox_min_create + dinamic_crate_translation_model[0];
+                bbox_max_create = origin_bbox_max_create + dinamic_crate_translation_model[0];
+            } else {
+                // Aplica as matrizes de translação no objeto
+                bbox_min_create = origin_bbox_min_create + translation_models[i];
+                bbox_max_create = origin_bbox_max_create + translation_models[i];
+            }
+
 
             // Aplica as matrizes de rotação
             bbox_min_create *= glm::vec3(1.0f, 1.0f, 1.0f);
