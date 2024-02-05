@@ -15,7 +15,6 @@ in vec2 texcoords;
 
 // Cor do vértices para interpolação de Gouraud
 in vec3 vertex_color;
-flat in int gouraud_out;
 
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
@@ -29,6 +28,8 @@ uniform mat4 projection;
 #define COW 4
 #define SPHERE 5
 uniform int object_id;
+uniform int skybox;
+uniform int gouraud;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
 uniform vec4 bbox_min;
@@ -39,6 +40,7 @@ uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
 uniform sampler2D TextureImage3;
+uniform sampler2D TextureImage4;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -49,12 +51,19 @@ out vec4 color;
 
 void main()
 {
+
     // se interpolação for de gouraud então só repassamos o valor de vertex_color
-    if(gouraud_out == 1){
+    if(gouraud == 1){
         color.a = 1;
         color.rgb = vertex_color;
         return;
     }
+
+    // Coordenadas de textura U e V
+    float U = 0.0;
+    float V = 0.0;
+    vec3 Kd0;
+
 
     // CALCULO DA COR
 
@@ -104,6 +113,32 @@ void main()
 
     // Espectro da luz ambiente
     vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
+
+
+    if (skybox == 1){
+        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+        vec4 vetor_centro_ponto_p = normalize(vec4(position_model - bbox_center));
+        vec4 ponto_p_linha = vec4(bbox_center + vetor_centro_ponto_p);
+        float arcotangente = atan(ponto_p_linha.x,ponto_p_linha.z);
+        float seno_inverso = asin(ponto_p_linha.y);
+
+        U = (arcotangente + M_PI)   / (2*M_PI);
+        V = (seno_inverso + M_PI_2) /  M_PI;
+
+        vec3 Kd0 = texture(TextureImage4, vec2(U,V)).rgb;
+
+        // Equação de Iluminação
+        float lambert = max(0,dot(n,-l));
+
+        color.rgb = Kd0 * (lambert + 0.01);
+
+        color.a = 1;
+
+        // Cor final com correção gamma, considerando monitor sRGB.
+        // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
+        color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
+        return;
+    }
 
     if (object_id == SPHERE)
     {
@@ -156,11 +191,6 @@ void main()
         color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
         return;
     }
-
-    // Coordenadas de textura U e V
-    float U = 0.0;
-    float V = 0.0;
-    vec3 Kd0;
 
     if ( object_id == PLATAFORM )
     {

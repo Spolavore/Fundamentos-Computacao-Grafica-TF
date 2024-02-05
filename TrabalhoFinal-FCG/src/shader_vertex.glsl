@@ -24,7 +24,7 @@ out vec4 position_model;
 out vec4 normal;
 out vec2 texcoords;
 out vec3 vertex_color;      // contem a cor do vértice caso a interpolação seja de gouraud
-flat out int gouraud_out;   // se 1 interpolação é feita por gouraud
+
 
 void main()
 {
@@ -46,9 +46,6 @@ void main()
 
     // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
     texcoords = texture_coefficients;
-
-    // gouraud_out é enviada para o shader_fragment, repassando o valor de gouraud
-    gouraud_out = gouraud;
 
     // caso o objeto seja interpolado com gouraud fazemos o calculo aqui no shader_vertex
     if(gouraud == 1){
