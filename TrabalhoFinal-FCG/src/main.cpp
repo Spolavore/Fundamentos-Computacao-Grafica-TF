@@ -502,6 +502,24 @@ int main(int argc, char* argv[])
 
         seconds = (double)glfwGetTime();
 
+        glm::vec3 translated_model;
+
+        // SKY BOX
+        model = Matrix_Translate(0.0f,0.0f,0.0f) *  Matrix_Scale(30.0f, 30.0f, 30.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        glUniform1i(g_gouraud_uniform, 0);
+        glUniform1i(g_skybox_uniform, 1);
+        DrawVirtualObject("the_sphere");
+            // verifica se o vetor já está no vetor, se não está adiciona nele
+        translated_model = glm::vec3(0.0f,0.0f,0.0f);
+        VerifyIfExistInVector(&sphere_translation_models, translated_model);
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+
         // calcula a translação das esferas com uma curva de bezier
         glm::vec4 translacao_esferas = CurvaBezier(seconds);
 
@@ -518,7 +536,7 @@ int main(int argc, char* argv[])
         glUniform1i(g_skybox_uniform, 0);
         DrawVirtualObject("the_sphere");
             // verifica se o vetor já está no vetor, se não está adiciona nele
-        glm::vec3 translated_model = glm::vec3(x_esfera, y_esfera, z_esfera);
+        translated_model = glm::vec3(x_esfera, y_esfera, z_esfera);
         VerifyIfExistInVector(&sphere_translation_models, translated_model);
 
             // Desenhamos o modelo da esfera
@@ -534,23 +552,6 @@ int main(int argc, char* argv[])
         translated_model = glm::vec3(x_esfera, y_esfera, z_esfera);
         VerifyIfExistInVector(&sphere_translation_models, translated_model);
 
-/*
-        // SKY BOX
-        model = Matrix_Translate(0.0f,0.0f,0.0f) *  Matrix_Scale(30.0f, 30.0f, 30.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
-        glUniform1i(g_gouraud_uniform, 0);
-        glUniform1i(g_skybox_uniform, 1);
-        DrawVirtualObject("the_sphere");
-            // verifica se o vetor já está no vetor, se não está adiciona nele
-        translated_model = glm::vec3(0.0f,0.0f,0.0f);
-        VerifyIfExistInVector(&sphere_translation_models, translated_model);
-
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-*/
         // ==================================  FASE 1 ==================================================================
         float translate_x = 0.0f;
         float translate_y = 0.0f;
