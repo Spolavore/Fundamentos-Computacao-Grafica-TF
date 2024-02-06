@@ -191,7 +191,6 @@ bool tecla_S_pressionada = false;
 bool tecla_C_pressionada = false;
 bool shift_pressionado = false;
 bool espaco_pressionado = false;
-bool espaco_pressionado = false;
 
 // Controla o quanto a caixa anda com base nos inputs do ususário (X ou Z )
 float dinamic_crate_moviment = 0.0f;
@@ -243,7 +242,7 @@ std::vector<glm::vec3>  dinamic_crate_translation_model; // vetor que guarda ape
 // variaveis de controle do tempo de pulo atual e máximo
 float jump_initial_time = 1.0f;
 float jump_current_time = 0.0f;
-#define MAX_TEMPO_PULO 0.2f
+#define MAX_TEMPO_PULO 0.25f
 
 int main(int argc, char* argv[])
 {
@@ -279,6 +278,7 @@ int main(int argc, char* argv[])
     // Pedimos para utilizar OpenGL versão 3.3 (ou superior)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwSwapInterval(1); // Habilita o V-Sync
 
     #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -288,6 +288,8 @@ int main(int argc, char* argv[])
     // funções modernas de OpenGL.
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+    glfwWindowHint(GLFW_REFRESH_RATE, 60);
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
@@ -322,6 +324,7 @@ int main(int argc, char* argv[])
     // Definimos a função de callback que será chamada sempre que a janela for
     // redimensionada, por consequência alterando o tamanho do "framebuffer"
     // (região de memória onde são armazenados os pixels da imagem).
+    glfwSwapInterval(1);
     glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
     FramebufferSizeCallback(window, 1920, 1080); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
 
