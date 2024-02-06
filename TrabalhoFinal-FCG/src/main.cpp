@@ -336,7 +336,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/floortexture.jpg");                   // TextureImage1
     LoadTextureImage("../../data/textura_madeira_clean.jpg");          // TextureImage2
     LoadTextureImage("../../data/cow_texture.jpg");                    // TextureImage3
-    LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");        // TextureImage4
+    LoadTextureImage("../../data/sky.jpg");                             // TextureImage4
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     LoadAllGameObj();
@@ -746,7 +746,7 @@ int main(int argc, char* argv[])
         cow_y_rotation += 0.1f;
         // ==================================  FASE 4 ==================================================================
 
-        model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.01f, 3.0f);
+        model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.0001f, 3.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, FLOOR);
         glUniform1i(g_gouraud_uniform, 0);
