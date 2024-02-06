@@ -174,11 +174,6 @@ std::stack<glm::mat4>  g_MatrixStack;
 // Razão de proporção da janela (largura/altura). Veja função FramebufferSizeCallback().
 float g_ScreenRatio = 1.0f;
 
-// Ângulos de Euler que controlam a rotação de um dos cubos da cena virtual
-float g_AngleX = 0.0f;
-float g_AngleY = 0.0f;
-float g_AngleZ = 0.0f;
-
 bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
 
@@ -197,6 +192,8 @@ bool tecla_C_pressionada = false;
 bool shift_pressionado = false;
 bool espaco_pressionado = false;
 
+// Controla o quanto a caixa anda com base nos inputs do ususário (X ou Z )
+float dinamic_crate_moviment = 0.0f;
 
 // variaveis de controle para saber se o jogador esta pulando ou caindo
 bool usuario_esta_pulando = false;
@@ -204,8 +201,8 @@ bool usuario_esta_caindo = false;
 
 // verifica se o usuário pode pular
 int tempoPulo = 0;
-
 bool pode_pular = true;
+
 // Variáveis que definem a câmera em coordenadas esféricas, controladas pelo
 // usuário através do mouse (veja função CursorPosCallback()). A posição
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
@@ -238,9 +235,11 @@ float cow_y_rotation = 0.0f; // controla a rotação da vaca (é automaticamente
 
 std::vector<glm::vec3>  sphere_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas esferas
 std::vector<glm::vec3>  crates_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas caixas
-std::vector<glm::vec3>  crates_rotation_models; // vetor contendo todas as transformações de rotação de modelo aplicadas nas caixas
 std::vector<glm::vec3>  plataforms_translation_models; // vetor contendo todas as transformações de translacao de modelo aplicadas nas plataformas
-std::vector<glm::vec3>  cow_translation_models;
+std::vector<glm::vec3>  cow_translation_models; // vetor que armazena a matrix de rotação da vaca
+std::vector<glm::vec3>  dinamic_crate_translation_model; // vetor que guarda apenas uma matriz de translacao referente a matriz da caixa que pode ser movimentada
+
+// variaveis de controle do tempo de pulo atual e máximo
 float jump_initial_time = 1.0f;
 float jump_current_time = 0.0f;
 #define MAX_TEMPO_PULO 0.2f
@@ -436,7 +435,7 @@ int main(int argc, char* argv[])
             }
             camera_position_c = last_camera_c_point;
 
-            verifyCratesCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene, crates_translation_models, &pode_pular, crates_rotation_models);
+            verifyCratesCollisions(user_can_move, camera_position_c, camera_view_vector,g_VirtualScene, crates_translation_models, &pode_pular, dinamic_crate_translation_model);
             verifyPlataformCollisions(camera_position_c, camera_view_vector, g_VirtualScene, plataforms_translation_models, user_can_move_in_platforms);
             verifyIfHittedCow(&camera_position_c, cow_translation_models);
             ApplyFreeCamera(&camera_position_c, &camera_view_vector, &camera_up_vector, &delta_t, &speed, &last_camera_c_point);
@@ -570,13 +569,13 @@ int main(int argc, char* argv[])
             glm::vec3 translated_model = glm::vec3(translate_x, translate_y, translate_z);
             VerifyIfExistInVector(&crates_translation_models, translated_model);
 
-            // adiciona também na lista o vetor do model de rotação, mesmo que ele não seja usado aqui precisamos
-            // adicionar pois no jogo há caixas que utilizam dessa rotação
-            glm::vec3 rotation_model = glm::vec3(1.0f, 1.0f, 1.0f);
-            VerifyIfExistInVector(&crates_rotation_models, rotation_model);
-            translate_x += 1.0f;
-            translate_y += 0.5f;
-        }
+                // adiciona também na lista o vetor do model de rotação, mesmo que ele não seja usado aqui precisamos
+                // adicionar pois no jogo há caixas que utilizam dessa rotação
+                glm::vec3 rotation_model = glm::vec3(1.0f, 1.0f, 1.0f);
+                VerifyIfExistInVector(&crates_translation_models, rotation_model);
+                translate_x += 1.0f;
+                translate_y += 0.5f;
+            }
 
         float plataforme_translate_x = 5.0f;
         float plataforme_translate_y = 2.0f;
@@ -607,10 +606,10 @@ int main(int argc, char* argv[])
 
             VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
 
-            // adiciona também na lista o vetor do model de rotação, mesmo que ele não seja usado aqui precisamos
-            // adicionar pois no jogo há caixas que utilizam dessa rotação
-            glm::vec3 rotation_model = glm::vec3(1.0f, 1.0f, 1.0f);
-            VerifyIfExistInVector(&crates_rotation_models, rotation_model);
+                // adiciona também na lista o vetor do model de rotação, mesmo que ele não seja usado aqui precisamos
+                // adicionar pois no jogo há caixas que utilizam dessa rotação
+                glm::vec3 rotation_model = glm::vec3(1.0f, 1.0f, 1.0f);
+                VerifyIfExistInVector(&crates_translation_models, rotation_model);
 
             translate_z += 1.3f;
         }
@@ -634,29 +633,26 @@ int main(int argc, char* argv[])
 
         // ==================================  FASE 3 ==================================================================
 
-        translate_x = 3.0f ;
-        translate_y = 1.5f ;
-        translate_z = 11.0f;
+            translate_x = 3.0f ;
+            translate_y = 1.5f ;
+            translate_z = 14.0f;
 
-        for(int i = 0; i < 1; i++){
-            model = Matrix_Translate(translate_x, translate_y, translate_z) *
-                                       Matrix_Rotate_X(g_AngleX) *
-                                       Matrix_Rotate_Y(g_AngleY) *
-                                       Matrix_Rotate_Z(g_AngleZ)
-                                       * Matrix_Scale(0.1f,0.1f,0.1f);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLATAFORM);
-            glUniform1i(g_gouraud_uniform, 0);
-            glUniform1i(g_skybox_uniform, 0);
-            DrawVirtualObject("Crate_Plane.005");
-            VerifyIfExistInVector(&crates_translation_models, glm::vec3(translate_x,translate_y,translate_z));
+            for(int i = 0; i < 1; i++){
+                  model = Matrix_Translate(translate_x, translate_y, translate_z + dinamic_crate_moviment) *  Matrix_Scale(0.1f,0.1f,0.1f);
+                  glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                  glUniform1i(g_object_id_uniform, PLATAFORM);
+                  DrawVirtualObject("Crate_Plane.005");
+                  glm::vec3 translated_vector = glm::vec3(translate_x, translate_y, translate_z + dinamic_crate_moviment);
 
-            // adiciona também na lista o vetor do model de rotação, mesmo que ele não seja usado aqui precisamos
-            // adicionar pois no jogo há caixas que utilizam dessa rotação
-            glm::vec3 rotation_model = glm::vec3(g_AngleX, g_AngleY, g_AngleZ);
-            VerifyIfExistInVector(&crates_rotation_models, rotation_model);
-            translate_x -= 1.0f;
-        }
+                  if(dinamic_crate_translation_model.size() != 0){
+                    dinamic_crate_translation_model.clear();
+                    dinamic_crate_translation_model.push_back(translated_vector);
+                  } else {
+                    dinamic_crate_translation_model.push_back(translated_vector);
+                  }
+
+                  translate_x -= 1.0f;
+            }
 
 
         translate_x = 2.0f;
@@ -742,9 +738,9 @@ int main(int argc, char* argv[])
         glUniform1i(g_skybox_uniform, 0);
         DrawVirtualObject("cow");
 
-        VerifyIfExistInVector(&cow_translation_models, glm::vec3(cow_translate_x, cow_translate_y, cow_translate_z));
-        cow_y_rotation += 0.1f;
-        // ==================================  FASE 4 ==================================================================
+            VerifyIfExistInVector(&cow_translation_models, glm::vec3(cow_translate_x, cow_translate_y, cow_translate_z));
+            cow_y_rotation += 0.5f * delta_t;
+            // ==================================  FASE 4 ==================================================================
 
         model =  Matrix_Translate(0.0f,0.0f,-10.0f) *Matrix_Scale(-3.0f, 0.01f, 3.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -790,6 +786,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+
+// Função que verifica se um elemento já está presente no vetor
 void VerifyIfExistInVector(std::vector<glm::vec3> *translation_models, glm::vec3 newModel){
     // FONTE DO CODIGO: CHATGPT-> Inicio
     bool alreadyExists = false;
@@ -1565,7 +1563,16 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 // tecla do teclado. Veja http://www.glfw.org/docs/latest/input_guide.html#input_key
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
-    // O código abaixo implementa a seguinte lógica:
+
+    // ===================
+    // Não modifique este loop! Ele é utilizando para correção automatizada dos
+    // laboratórios. Deve ser sempre o primeiro comando desta função KeyCallback().
+    for (int i = 0; i < 10; ++i)
+        if (key == GLFW_KEY_0 + i && action == GLFW_PRESS && mod == GLFW_MOD_SHIFT)
+            std::exit(100 + i);
+    // ===================
+
+        // O código abaixo implementa a seguinte lógica:
     //   Se apertar tecla X       então g_AngleX += delta;
     //   Se apertar tecla shift+X então g_AngleX -= delta;
     //   Se apertar tecla Y       então g_AngleY += delta;
@@ -1578,27 +1585,14 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     if (key == GLFW_KEY_X && action == GLFW_PRESS)
     {
-        printf("x");
-        g_AngleX += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-    {
-        g_AngleY += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
+        dinamic_crate_moviment += 0.1f;
     }
     if (key == GLFW_KEY_Z && action == GLFW_PRESS)
     {
-        g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
+        dinamic_crate_moviment -= 0.1f;
     }
 
-    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
-    if (key == GLFW_KEY_Q && action == GLFW_PRESS)
-    {
-        g_AngleX = 0.0f;
-        g_AngleY = 0.0f;
-        g_AngleZ = 0.0f;
 
-    }
 
     // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
@@ -1606,11 +1600,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         g_UsePerspectiveProjection = true;
     }
 
-    // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
-    if (key == GLFW_KEY_O && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = false;
-    }
+
 
     // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
     if (key == GLFW_KEY_H && action == GLFW_PRESS)
@@ -1626,14 +1616,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fprintf(stdout,"Shaders recarregados!\n");
         fflush(stdout);
     }
-
-    // ===================
-    // Não modifique este loop! Ele é utilizando para correção automatizada dos
-    // laboratórios. Deve ser sempre o primeiro comando desta função KeyCallback().
-    for (int i = 0; i < 10; ++i)
-        if (key == GLFW_KEY_0 + i && action == GLFW_PRESS && mod == GLFW_MOD_SHIFT)
-            std::exit(100 + i);
-    // ===================
      if (key == GLFW_KEY_D)
     {
         if (action == GLFW_PRESS){
@@ -1660,7 +1642,13 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             // Usuário apertou a tecla D, então atualizamos o estado para pressionada
             espaco_pressionado= true;
 
-        }else if (action == GLFW_RELEASE){
+        }else if(action == GLFW_REPEAT){
+            if(!espaco_pressionado){
+                espaco_pressionado = true;
+            }
+        }
+
+        else if (action == GLFW_RELEASE){
             // Usuário largou a tecla D, então atualizamos o estado para NÃO pressionada
             espaco_pressionado = false;
             if(jump_current_time - jump_initial_time <= MAX_TEMPO_PULO){
@@ -1859,7 +1847,6 @@ void TextRendering_ShowEulerAngles(GLFWwindow* window)
     float pad = TextRendering_LineHeight(window);
 
     char buffer[80];
-    snprintf(buffer, 80, "Euler Angles rotation matrix = Z(%.2f)*Y(%.2f)*X(%.2f)\n", g_AngleZ, g_AngleY, g_AngleX);
 
     TextRendering_PrintString(window, buffer, -1.0f+pad/10, -1.0f+2*pad/10, 1.0f);
 }
