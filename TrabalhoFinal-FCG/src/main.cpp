@@ -339,7 +339,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/floortexture.jpg");                   // TextureImage1
     LoadTextureImage("../../data/textura_madeira_clean.jpg");          // TextureImage2
     LoadTextureImage("../../data/cow_texture.jpg");                    // TextureImage3
-    LoadTextureImage("../../data/sky.jpg");                             // TextureImage4
+    LoadTextureImage("../../data/sky.hdr");                             // TextureImage4
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     LoadAllGameObj();
