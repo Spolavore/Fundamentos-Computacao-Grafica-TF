@@ -242,7 +242,7 @@ std::vector<glm::vec3>  dinamic_crate_translation_model; // vetor que guarda ape
 // variaveis de controle do tempo de pulo atual e máximo
 float jump_initial_time = 1.0f;
 float jump_current_time = 0.0f;
-#define MAX_TEMPO_PULO 0.25f
+#define MAX_TEMPO_PULO 0.2f
 
 int main(int argc, char* argv[])
 {
