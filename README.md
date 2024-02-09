@@ -52,7 +52,9 @@ Distruição das atividades:
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Implementações dos conceitos de Computação Gráfica
-
+### Processamento das fases:
+  * Cada fase está contida dentro de um laço for , onde é instanciado n objetos. Modifica-se a posição x, y  e Z desses objetos a para criar padrões distintos entre as fases do jogo
+    
 ### Interação com o usuários
    O jogo disponibiliza interação com usuário em tempo real, para isso foi utilizada funções disponíveis pela biblioteca GLFW, como , por exemplo:
      * [     glfwSetKeyCallback     ]
@@ -93,13 +95,23 @@ Para o controle do mouse e suas derivações, as funções glfwSetScrollCallback
 
 ### Colisões
   * O jogo possui 3 tipos de colisões:
-        - Colisão ponto cubo - Utilizada para detectar a colisão da câmera virtual ( nesse caso o personagem do jogo ) com as caixas onde ele pode pular. Cada vez que uma caixa é instânciada salva-se a matriz de transalação dela e posteriormente é mandado para o arquivo collisions.cpp onde ele processará o vetor com todas as matrizes de translação de todas as caixas. Dentro de collisions.cpp pega-se a bounding box da caixa ( a mesma para todas as caixas da cena, pois é o mesmo objeto ), multiplicase por uma matriz de escalamento que diminui todas as caixas em 90%, dentro de um loop multiplica por cada uma das matrizes de translação das caixas salvas e faz uma checagem para saber os pontos projetados em volta da câmera ( pela soma de vetor + posição da câmera ) entraram em contato com a bounding box de alguma das diversas caixas.
+        - Colisão ponto cubo - Utilizada para detectar a colisão da câmera virtual ( nesse caso o personagem do jogo ) com as caixas onde ele pode pular. Cada vez que uma caixa é instânciada salva-se a matriz de transalação dela e posteriormente é mandado para o arquivo collisions.cpp onde ele processará o vetor com todas as matrizes de translação de todas as caixas. Dentro de collisions.cpp pega-se a bounding box da caixa ( a mesma para todas as caixas da cena, pois é o mesmo objeto ), multiplicase por uma matriz de escalamento que diminui todas as caixas em 90%, dentro de um loop multiplica por cada uma das matrizes de translação das caixas salvas e faz uma checagem para saber os pontos projetados em volta da câmera ( pela soma de vetor + posição da câmera ) entraram em contato com a bounding box de alguma das diversas caixas. Aqui entra também a interação do usuário com o teclado, onde por meio das teclas X e Z ele consegue movimentar uma caixa em específico, a verificação da bounding box da caixa é feita na mesma função , mas avalia-se uma matriz distinta - a qual possui apenas uma posição que sempre será modificada quando o usuário apertar X ou Z para movimentar a caixa.
         ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/29fe582f-af53-4d82-9398-68673dc3a1da)
         ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/7f018332-77ec-447c-82b3-049432a03667)
 
        - Colisão ponto plano - Utilizada para saber se o usuário está em contato com alguma das plataformas presentes entre as fazes do jogo. Processo semelhante ao descrito para colisões entre caixas, entretanto fazemos apenas uma projeção de um ponto abaixo da posição da camera e vemos se esse ponto entro em contato com a bounding box da plataforma.
          ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/1187d342-1afe-45b2-b0c7-ac648469ab28)
          ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/74bc99b2-b949-4f68-9a59-239c0cc8a412)
+
+    - Colisão ponto esfera - Utilizada para detectar se o usuário entrou em contato com a vaca ( localizada na última fase ) , cria-se uma representação de uma esfera em volta da instãncia da cow.obj e verificamos se a posição da câmera está dentro dessa esfera. Caso isso acontece o usuário volta para o ponto inicial do jogo
+       ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/0325f82f-59f3-42b4-bb78-4fb1ac447ff3)
+       ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/b31889d4-9f4a-4bce-b56f-d4a4b00c5991)
+       ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/ec2457fa-686b-4369-80d2-9518cc206fb6)
+
+
+    - Colisão de queda - Utilizada no caso de o usuário estiver caindo, projeta-se pontos ao redor dele para saber se ele irá acertar um objeto, caso acerte um objeto no sentido vertical para baixo então significa que ele está em cima de uma caixa ou de uma plataforma, logo ele deve parar de cair. Se ele não acertar nenhum desses objetos ele irá parar de cair quando a posição da câmera for y=0.5f
+      ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/c4e1b6d4-e756-474e-bef9-f11dedcd2de9)
+
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
