@@ -84,10 +84,22 @@ Para o controle do mouse e suas derivações, as funções glfwSetScrollCallback
 
 ### Modelos de Interpolação de Phong e Gouraud
   * A única diferença entre ambas interpolações é que a de Phong é calculada no fragment shader, enquanto que a de Gouraud é calculada no vertex shader. Para isso utilizamos uma variável 'Uniform' para informar os shaders caso o objeto devesse ser calculado com Gouraud. O vetex shader de um objeto com interpolação de Gouraud tem faz tudo que o vertex shader de um objeto com interpolação de Phong faz, porém ele também calcula o valor da cor do objeto e envia a cor, ao chegar no fragment shader ele apenas aplica a cor passada pelo vertex shader à cor de saída. Para a interpolação de Phong utilizamos a posição global do objeto, posição do modelo, normal e cordenadas de textura enviadas pelo vertex shader para calcular a cor/textura do objeto.
+  
 #### Shader Vertex
 ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/84470734/72770869-c39b-44ca-bfd8-12fbf51d3b8b)
 #### Shader Fragment
 ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/84470734/36ffa145-fe39-49da-95c3-72e235ebcd77)
+
+
+### Colisões
+  * O jogo possui 3 tipos de colisões:
+        - Colisão ponto cubo - Utilizada para detectar a colisão da câmera virtual ( nesse caso o personagem do jogo ) com as caixas onde ele pode pular. Cada vez que uma caixa é instânciada salva-se a matriz de transalação dela e posteriormente é mandado para o arquivo collisions.cpp onde ele processará o vetor com todas as matrizes de translação de todas as caixas. Dentro de collisions.cpp pega-se a bounding box da caixa ( a mesma para todas as caixas da cena, pois é o mesmo objeto ), multiplicase por uma matriz de escalamento que diminui todas as caixas em 90%, dentro de um loop multiplica por cada uma das matrizes de translação das caixas salvas e faz uma checagem para saber os pontos projetados em volta da câmera ( pela soma de vetor + posição da câmera ) entraram em contato com a bounding box de alguma das diversas caixas.
+        ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/29fe582f-af53-4d82-9398-68673dc3a1da)
+        ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/7f018332-77ec-447c-82b3-049432a03667)
+
+       - Colisão ponto plano - Utilizada para saber se o usuário está em contato com alguma das plataformas presentes entre as fazes do jogo. Processo semelhante ao descrito para colisões entre caixas, entretanto fazemos apenas uma projeção de um ponto abaixo da posição da camera e vemos se esse ponto entro em contato com a bounding box da plataforma.
+         ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/1187d342-1afe-45b2-b0c7-ac648469ab28)
+         ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/74bc99b2-b949-4f68-9a59-239c0cc8a412)
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -118,4 +130,39 @@ Para o controle do mouse e suas derivações, as funções glfwSetScrollCallback
   - C : para ativar camera look-at
   - X : para movimentar objetos específicos na horizontal ( sentido positivo )
   - Z : para movimentar objetos específicos na horizontal ( sentido negativo )
-    
+
+# Como rodar o jogo 
+Recomenda-se fortemente que se utilize a IDE Codeblock, visto que ela já possui um compilador de C/C++ (Não precisando utilizar o cMake)
+
+## Opção 1
+- 1) Faça donwload do zip pelo GitHub
+- 2) Extraia o arquivo compactado no seu diretório de preferência
+- 3) Acesse a pasta bin -> Acesse Release -> Abra o arquivo main.exe
+  ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/f1848f21-8866-4465-82f2-9ec15026aef5)
+  ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/7657ac91-dc1a-4267-9554-b6f13ea4bf2e)
+  ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/0dac5f44-0d74-43e3-b828-7d96d696c1bc)
+  ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/39b755da-d267-4a8b-b92b-cd4a3cc07439)
+
+
+
+## Opção 2
+- 1) Faça donwload do zip pelo GitHub
+- 2) Extraia o arquivo compactado no seu diretório de preferência
+- 3) Abra a IDE Codeblocks
+- 4) Vá na aba "File" ( No canto superior esquerdo da IDE )
+  
+  ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/b842938b-f6ed-4890-aef5-88e0f650921e)
+
+
+- 5) Clique em "Open"
+- 6) Entre na pasta que você extraiu -> Abra o arquivo Laboratorio_5.cbp
+  ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/22c9e79a-f699-48fa-912a-46ea8a2a961b)
+  ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/26a1d70e-524c-41bd-965a-4dbd9abfe396)
+
+- 7) Clique no ícode azul para ele buildar o programa novamente e logo em seguida clique no botão de Play.
+  ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/caf5fcac-dda2-4809-8aea-ff986bc2f00d)
+  ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/863594bc-20a9-4eb8-b3eb-3c36b633608c)
+
+  
+
+
