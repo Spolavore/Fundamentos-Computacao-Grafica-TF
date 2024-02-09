@@ -93,14 +93,16 @@ Para o controle do mouse e suas derivações, as funções glfwSetScrollCallback
 
 ## Preview do Jogo
 - Plataformas para o usuários conseguir passar de nível:
-![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/09d11ffa-14dc-4757-9418-4c7ce035ac51)
+![Captura de tela 2024-02-07 010443](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/84470734/8aa8c67f-7ebf-40dc-9b2b-5fe5d5186a76)
 
 
 - Malhas Poligonais Complexas ( cow.obj )
-![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/ccc265e6-05f4-4939-99f1-f5670256a506)
+![Captura de tela 2024-02-07 010520](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/84470734/7d1595f5-8ee3-4b4c-84f8-6b65e71a5019)
 
 
-- Camera look-at 
+- Camera look-at
+![Captura de tela 2024-02-07 010601](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/84470734/3ef04d48-bfbc-4aaa-bf89-6db350eef86e)
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Tutorial de Uso do jogo.
 
