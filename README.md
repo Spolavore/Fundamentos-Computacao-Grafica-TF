@@ -54,7 +54,27 @@ Distruição das atividades:
 ## Implementações dos conceitos de Computação Gráfica
 ### Processamento das fases:
   * Cada fase está contida dentro de um laço for , onde é instanciado n objetos. Modifica-se a posição x, y  e Z desses objetos a para criar padrões distintos entre as fases do jogo
-    
+    Fase 1:
+      ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/c50b0a00-2b06-49ee-8207-d66f91c5ca4d)
+
+
+    Fase 2:
+
+      ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/b03f58d6-375b-4f4f-81e8-0dd0c30f50e0)
+
+
+    Fase 3:
+
+      ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/d99f3983-9234-4fd4-9ef3-d174aca6b49d)
+
+
+    Fase 4:
+
+      ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/5d1cc4e3-f486-4e7d-8712-30e59f87fdcf)
+
+
+
+
 ### Interação com o usuários
    O jogo disponibiliza interação com usuário em tempo real, para isso foi utilizada funções disponíveis pela biblioteca GLFW, como , por exemplo:
      * [     glfwSetKeyCallback     ]
