@@ -77,8 +77,17 @@ Para o controle do mouse e suas derivações, as funções glfwSetScrollCallback
 
      ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/75754941/bf8317d9-f3db-4196-b668-af6a53724df4)
 
+### Movimentação com Curva Bézier Cúbica Curva de Bezier e Animações Baseadas no Tempo
+ * A função CurvaBezier recebe o tempo em segundos (double), a função utiliza quatro pontos (hard coded) para computar três vetores, estes vetores são somados aos pontos para gerar novos três pontos que geram dois novos vetor, e assim em diante, de forma que ao final temos apenas um ponto. Este ponto é retornado pela função e somado com a posição das esferas para move-las em uma curva de Bezier cúbica, que é calculada utilizando o tempo de duração do programa.
+ * 
+     ![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/84470734/e7ef54c8-0d62-4ad9-864d-29c16ec1b0db)
 
-
+### Modelos de Interpolação de Phong e Gouraud
+  * A única diferença entre ambas interpolações é que a de Phong é calculada no fragment shader, enquanto que a de Gouraud é calculada no vertex shader. Para isso utilizamos uma variável 'Uniform' para informar os shaders caso o objeto devesse ser calculado com Gouraud. O vetex shader de um objeto com interpolação de Gouraud tem faz tudo que o vertex shader de um objeto com interpolação de Phong faz, porém ele também calcula o valor da cor do objeto e envia a cor, ao chegar no fragment shader ele apenas aplica a cor passada pelo vertex shader à cor de saída. Para a interpolação de Phong utilizamos a posição global do objeto, posição do modelo, normal e cordenadas de textura enviadas pelo vertex shader para calcular a cor/textura do objeto.
+#### Shader Vertex
+![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/84470734/72770869-c39b-44ca-bfd8-12fbf51d3b8b)
+#### Shader Fragment
+![image](https://github.com/Spolavore/Fundamentos-Computacao-Grafica-TF/assets/84470734/36ffa145-fe39-49da-95c3-72e235ebcd77)
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
